@@ -58,15 +58,11 @@ class Customer(AbstractBaseUser, PermissionsMixin):
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_full_name(self):
-        """
-        Return the first_name plus the last_name, with a space in between.
-        """
-        full_name = "%s %s" % (self.first_name, self.last_name)
-        return full_name.strip()
+        return f"{self.first_name} {self.last_name}".strip()
 
     def get_short_name(self):
         """Return the short name for the user."""
         return self.first_name
 
     def get_registration_duration(self):
-        return f"Time on site {timezone.now() - self.date_joined}"
+        return timezone.now() - self.date_joined
