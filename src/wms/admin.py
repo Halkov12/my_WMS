@@ -13,19 +13,25 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["name"]
+    list_filter = ["name"]
+    search_fields = ["name"]
 
 
 @admin.register(StockOperation)
 class StockOperationAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["operation_type", "created_by", "reason"]
+    list_filter = ["operation_type", "created_by"]
+    search_fields = ["operation_type"]
 
 
 @admin.register(StockOperationItem)
 class StockOperationItemAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["operation", "product", "quantity"]
+    list_filter = ["operation", "product"]
 
 
 @admin.register(ChangeLog)
 class ChangeLogAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["user", "action", "product"]
+    list_filter = ["user", "action"]
