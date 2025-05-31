@@ -14,6 +14,7 @@ INSTALLED_APPS = [
     "accounts",
     "common",
     "wms",
+    "djmoney",
 ]
 
 MIDDLEWARE = [

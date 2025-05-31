@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models  # NOQA:F401
-
+from djmoney.models.fields import MoneyField
 from common.models import BaseModel
 
 
@@ -21,8 +21,12 @@ class UNIT_CHOICES(models.IntegerChoices):
 class Product(BaseModel):
     name = models.CharField(max_length=255)
     barcode = models.CharField(max_length=100, blank=True, unique=True)
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    purchase_price = MoneyField(
+        max_digits=10, decimal_places=2, null=True, blank=True, default_currency='UAH'
+    )
+    selling_price = MoneyField(
+        max_digits=10, decimal_places=2, null=True, blank=True, default_currency='UAH'
+    )
     unit = models.SmallIntegerField(choices=UNIT_CHOICES, default=UNIT_CHOICES.PIECES)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
