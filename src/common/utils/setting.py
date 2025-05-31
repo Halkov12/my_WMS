@@ -7,6 +7,7 @@ def get_setting(key, default=None):
     except Setting.DoesNotExist:
         return default
 
+
 def set_setting(key, value):
     setting, created = Setting.objects.get_or_create(key=key)
     setting.value = value

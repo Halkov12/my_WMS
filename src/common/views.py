@@ -1,8 +1,10 @@
 from django.shortcuts import render  # NOQA:F401
+from django.shortcuts import redirect
 
-from django.shortcuts import render, redirect
+from common.utils.setting import get_setting, set_setting
+
 from .forms import CurrencySettingForm
-from common.utils.setting import set_setting, get_setting
+
 
 def settings_view(request):
     if request.method == "POST":
@@ -11,7 +13,5 @@ def settings_view(request):
             set_setting("default_currency", form.cleaned_data["currency"])
             return redirect("settings")
     else:
-        form = CurrencySettingForm(initial={
-            "currency": get_setting("default_currency", "UAH")
-        })
+        form = CurrencySettingForm(initial={"currency": get_setting("default_currency", "UAH")})
     return render(request, "settings.html", {"form": form})
