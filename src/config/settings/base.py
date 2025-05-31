@@ -10,6 +10,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",
+    "accounts",
+    "common",
+    "wms",
+    "djmoney",
 ]
 
 MIDDLEWARE = [
@@ -65,3 +70,5 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "accounts.Customer"
