@@ -1,14 +1,13 @@
-from django.contrib import admin
-from django.urls import include, path
-
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("wms.urls")),
     path("", include("common.urls")),
-    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path("accounts/", include("accounts.urls", namespace="accounts")),
 ]
 
 if settings.DEBUG:

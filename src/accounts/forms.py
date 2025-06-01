@@ -23,18 +23,19 @@ class CustomerRegistrationForm(UserCreationForm):
             "role",
         ]
 
-    birth_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    birth_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), required=False)
 
     def clean_email(self):
-        email = self.cleaned_data.get('email').lower()
+        email = self.cleaned_data.get("email").lower()
         if Customer.objects.filter(email=email).exists():
             raise forms.ValidationError("Користувач з таким email вже існує.")
         return email
 
+
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'photo', 'birth_date']
+        fields = ["first_name", "last_name", "email", "phone_number", "photo", "birth_date"]
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+            "birth_date": forms.DateInput(attrs={"type": "date"}),
         }

@@ -6,5 +6,4 @@ app_name = "common"
 
 urlpatterns = [
     path("settings/", settings_view, name="settings"),
-
 ]

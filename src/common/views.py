@@ -13,7 +13,5 @@ def settings_view(request):
             set_setting("default_currency", form.cleaned_data["currency"])
             return redirect("common:settings")
     else:
-        form = CurrencySettingForm(initial={
-            "currency": get_setting("default_currency", "UAH")
-        })
+        form = CurrencySettingForm(initial={"currency": get_setting("default_currency", "UAH")})
     return render(request, "settings.html", {"form": form})

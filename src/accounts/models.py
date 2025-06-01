@@ -66,4 +66,3 @@ class Customer(AbstractBaseUser, PermissionsMixin):
 
     def get_registration_duration(self):
         return timezone.now() - self.date_joined
-

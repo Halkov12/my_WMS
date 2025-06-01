@@ -1,8 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.shortcuts import render, redirect
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import redirect, render
 
 from accounts.forms import CustomerRegistrationForm, ProfileUpdateForm
 
@@ -25,32 +25,30 @@ def register_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Реєстрація пройшла успішно. Тепер увійдіть у систему.")
-            return redirect('accounts:login')
+            return redirect("accounts:login")
     else:
         form = CustomerRegistrationForm()
-    return render(request, 'accounts/register.html', {'form': form})
-
+    return render(request, "accounts/register.html", {"form": form})
 
 
 def logout_view(request):
     logout(request)
-    return redirect('accounts:login')
+    return redirect("accounts:login")
 
 
 @login_required
 def profile_view(request):
-    return render(request, 'accounts/profile.html', {'user': request.user})
+    return render(request, "accounts/profile.html", {"user": request.user})
 
 
 @login_required
 def profile_edit_view(request):
     user = request.user
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ProfileUpdateForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
-            return redirect('accounts:profile')
+            return redirect("accounts:profile")
     else:
         form = ProfileUpdateForm(instance=user)
-    return render(request, 'accounts/profile_edit.html', {'form': form})
-
+    return render(request, "accounts/profile_edit.html", {"form": form})
