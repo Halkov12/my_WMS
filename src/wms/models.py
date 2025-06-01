@@ -13,10 +13,10 @@ class Category(models.Model):
 
 
 class UNIT_CHOICES(models.IntegerChoices):
-    PIECES = 0, "pcs"
-    KILOGRAMS = 1, "kgs"
-    LITER = 2, "lt"
-    GRAM = 3, "g"
+    PIECES = 1, "pcs"
+    KILOGRAMS = 2, "kgs"
+    LITER = 3, "lt"
+    GRAM = 4, "g"
 
 
 class Product(BaseModel):
@@ -39,9 +39,9 @@ class Product(BaseModel):
 
 
 class OPERATION_CHOICES(models.IntegerChoices):
-    RECEIPT = 0, "receipt"
-    ISSUE = 1, "issue"
-    WRITE_OFF = 2, "write off"
+    RECEIPT = 1, "receipt"
+    ISSUE = 2, "issue"
+    WRITE_OFF = 3, "write off"
 
 
 class StockOperation(BaseModel):

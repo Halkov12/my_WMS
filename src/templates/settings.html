@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Налаштування{% endblock %}
+
+{% block content %}
+<style>
+  .settings-container {
+    max-width: 480px;
+    margin: 40px auto 0;
+    padding: 30px 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .settings-container h1 {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    font-weight: 700;
+    color: #343a40;
+  }
+  form label {
+    font-weight: 600;
+    color: #495057;
+  }
+  .btn-primary {
+    width: 100%;
+    font-weight: 600;
+    padding: 0.6rem 0;
+    font-size: 1.1rem;
+  }
+</style>
+
+<div class="settings-container">
+    <h1>Налаштування</h1>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-4">
+            {{ form.currency.label_tag }}
+            {{ form.currency }}
+
+            {% if form.currency.errors %}
+                <div class="text-danger mt-2 small">
+                    {{ form.currency.errors }}
+                </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Зберегти</button>
+    </form>
+</div>
+{% endblock %}

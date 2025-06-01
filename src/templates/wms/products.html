@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Товари{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Товари</h1>
+
+    <form method="get" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+        <input type="text" name="q" placeholder="Пошук..." value="{{ query }}" class="form-control" style="max-width: 300px;">
+        <div class="form-check ms-3">
+            <input type="checkbox" class="form-check-input" id="activeOnly" name="active" value="1" {% if show_active_only %}checked{% endif %}>
+            <label class="form-check-label" for="activeOnly">Тільки активні</label>
+        </div>
+        <button type="submit" class="btn btn-primary ms-3">Пошук</button>
+    </form>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Штрихкод</th>
+                <th>Категорія</th>
+                <th>Закупівля</th>
+                <th>Продажа</th>
+                <th>Одиниця</th>
+                <th>Кількість</th>
+                <th>Активний</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in page_obj %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.barcode|default:"—" }}</td>
+                    <td>
+                        {% if product.category %}
+                            {{ product.category.name }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.purchase_price %}
+                            {{ product.purchase_price.amount }} {{ product.purchase_price.currency }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.selling_price %}
+                            {{ product.selling_price.amount }} {{ product.selling_price.currency }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                    <td>{{ product.get_unit_display }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{% if product.is_active %}✅{% else %}❌{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center">Товарів не знайдено.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&active={% if show_active_only %}1{% endif %}">Попередня</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Попередня</span></li>
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span></li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&active={% if show_active_only %}1{% endif %}">Наступна</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Наступна</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}
