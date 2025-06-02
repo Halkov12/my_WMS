@@ -1,14 +1,11 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Count, Q, Sum, F
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import render
-from djmoney.contrib.exchange.models import convert_money
-from djmoney.models.fields import MoneyField
 
-from common.utils.setting import get_setting
 from wms.models import OPERATION_CHOICES, Category, Product, StockOperation
 
 
@@ -70,7 +67,6 @@ def dashboard_view(request):
     return render(request, "wms/dashboard.html", context)
 
 
-
 def product_list_view(request):
     query = request.GET.get("q", "")
     category_id = request.GET.get("category")
@@ -83,7 +79,7 @@ def product_list_view(request):
     if category_id:
         products = products.filter(category_id=category_id)
 
-    products = products.order_by('name')
+    products = products.order_by("name")
 
     paginator = Paginator(products, 10)
     page_number = request.GET.get("page")
@@ -106,7 +102,7 @@ def product_list_view(request):
             total_selling += p.selling_price.amount
         total_quantity += p.quantity
 
-    categories = Category.objects.order_by('name')
+    categories = Category.objects.order_by("name")
 
     context = {
         "query": query,
@@ -118,5 +114,3 @@ def product_list_view(request):
         "categories": categories,
     }
     return render(request, "wms/products.html", context)
-
-
