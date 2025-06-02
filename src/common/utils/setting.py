@@ -1,5 +1,4 @@
-from common.models import Setting
-
+from common.models import Setting  # або ваша модель
 
 def get_setting(key, default=None):
     try:
@@ -7,8 +6,7 @@ def get_setting(key, default=None):
     except Setting.DoesNotExist:
         return default
 
-
 def set_setting(key, value):
-    setting, created = Setting.objects.get_or_create(key=key)
-    setting.value = value
-    setting.save()
+    obj, _ = Setting.objects.get_or_create(key=key)
+    obj.value = value
+    obj.save()

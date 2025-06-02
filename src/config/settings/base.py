@@ -14,6 +14,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "django_extensions",
     "djmoney",
+    'djmoney.contrib.exchange',
     "accounts",
     "common",
     "wms",
@@ -83,3 +84,10 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+
+FIXER_ACCESS_KEY = "3e7c5c4cd5f9630449354c71a401c8c9"
+MONEY_RATES = {
+    'DEFAULT_BACKEND': 'djmoney.contrib.exchange.backends.FixerBackend',
+    'ACCESS_KEY': FIXER_ACCESS_KEY,
+}
