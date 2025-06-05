@@ -1,11 +1,10 @@
 from django.urls import path
+from .views import IndexView, DashboardView, ProductListView
 
-from wms.views import dashboard_view, index, product_list_view
-
-app_name = "wms"
+app_name = 'wms'
 
 urlpatterns = [
-    path("", index, name="index"),
-    path("dashboard/", dashboard_view, name="dashboard"),
-    path("products/", product_list_view, name="product_list"),
+    path("", IndexView.as_view(), name="index"),
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    path("products/", ProductListView.as_view(), name="product_list"),
 ]

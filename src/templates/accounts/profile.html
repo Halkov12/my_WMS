@@ -17,7 +17,6 @@
             <p>Телефон: {{ user.phone_number|default:"Немає" }}</p>
             <p>Дата реєстрації: {{ user.date_joined|date:"d.m.Y" }}</p>
             <p>Роль: {{ user.get_role_display }}</p>
-            <a href="{% url 'common:settings' %}" class="btn btn-outline-secondary mt-3">Налаштування</a>
             <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary mt-3">Редагувати профіль</a>
         </div>
     </div>

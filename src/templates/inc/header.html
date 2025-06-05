@@ -20,20 +20,30 @@
             {% if request.user.is_authenticated %}
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
-                    <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#"
+                       id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if request.user.photo %}
-                            <img src="{{ user.photo.url }}" alt="avatar" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                        <img src="{{ user.photo.url }}" alt="avatar" class="rounded-circle me-2"
+                             style="width: 40px; height: 40px; object-fit: cover;">
                         {% else %}
-                            <div class="bg-secondary text-white d-flex justify-content-center align-items-center rounded-circle me-2" style="width: 40px; height: 40px;">
-                                <i class="bi bi-person"></i>
-                            </div>
+                        <div class="bg-secondary text-white d-flex justify-content-center align-items-center rounded-circle me-2"
+                             style="width: 40px; height: 40px;">
+                            <i class="bi bi-person"></i>
+                        </div>
                         {% endif %}
                         <span>{{ request.user.get_short_name }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Профіль</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">Вийти</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">Вийти</button>
+                            </form>
+                        </li>
                     </ul>
                 </div>
             </div>

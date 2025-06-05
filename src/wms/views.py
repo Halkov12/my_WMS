@@ -1,116 +1,102 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
-from django.shortcuts import render
+from django.views.generic import TemplateView, ListView
 
 from wms.models import OPERATION_CHOICES, Category, Product, StockOperation
 
 
-def index(request):
-    return render(request, "index.html")
+class IndexView(TemplateView):
+    template_name = "index.html"
 
 
-def dashboard_view(request):
-    today = datetime.today().date()
-    last_7_days = [today - timedelta(days=i) for i in reversed(range(7))]
+class DashboardView(TemplateView):
+    template_name = "wms/dashboard.html"
 
-    active_products_count = Product.objects.filter(is_active=True).count()
-    total_quantity = Product.objects.aggregate(total=Sum("quantity"))["total"] or 0
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = datetime.today().date()
+        last_7_days = [today - timedelta(days=i) for i in reversed(range(7))]
 
-    categories_summary = (
-        Category.objects.annotate(
-            active_products_count=Count("product", filter=Q(product__is_active=True)),
-            total_quantity=Sum("product__quantity"),
+        context["active_products_count"] = Product.objects.filter(is_active=True).count()
+        context["total_quantity"] = Product.objects.aggregate(total=Sum("quantity"))["total"] or 0
+
+        context["categories_summary"] = (
+            Category.objects.annotate(
+                active_products_count=Count("product", filter=Q(product__is_active=True)),
+                total_quantity=Sum("product__quantity"),
+            )
+            .filter(active_products_count__gt=0, total_quantity__gt=0)
+            .values("name", "active_products_count", "total_quantity")
         )
-        .filter(active_products_count__gt=0, total_quantity__gt=0)
-        .values("name", "active_products_count", "total_quantity")
-    )
 
-    operations_by_day = (
-        StockOperation.objects.filter(created_at__date__gte=last_7_days[0])
-        .annotate(day=TruncDate("created_at"))
-        .values("day", "operation_type")
-        .annotate(count=Count("id"))
-    )
+        operations_by_day = (
+            StockOperation.objects.filter(created_at__date__gte=last_7_days[0])
+            .annotate(day=TruncDate("created_at"))
+            .values("day", "operation_type")
+            .annotate(count=Count("id"))
+        )
 
-    daily_counts = {
-        int(OPERATION_CHOICES.RECEIPT): defaultdict(int),
-        int(OPERATION_CHOICES.ISSUE): defaultdict(int),
-        int(OPERATION_CHOICES.WRITE_OFF): defaultdict(int),
-    }
+        daily_counts = {
+            int(OPERATION_CHOICES.RECEIPT): defaultdict(int),
+            int(OPERATION_CHOICES.ISSUE): defaultdict(int),
+            int(OPERATION_CHOICES.WRITE_OFF): defaultdict(int),
+        }
 
-    for entry in operations_by_day:
-        op_type = entry["operation_type"]
-        day = entry["day"]
-        count = entry["count"]
-        daily_counts[op_type][day] = count
+        for entry in operations_by_day:
+            daily_counts[entry["operation_type"]][entry["day"]] = entry["count"]
 
-    receipt_data = [daily_counts[OPERATION_CHOICES.RECEIPT][day] for day in last_7_days]
-    issue_data = [daily_counts[OPERATION_CHOICES.ISSUE][day] for day in last_7_days]
-    write_off_data = [daily_counts[OPERATION_CHOICES.WRITE_OFF][day] for day in last_7_days]
+        context["date_labels"] = [day.strftime("%d-%m") for day in last_7_days]
+        context["receipt_data"] = [daily_counts[OPERATION_CHOICES.RECEIPT][day] for day in last_7_days]
+        context["issue_data"] = [daily_counts[OPERATION_CHOICES.ISSUE][day] for day in last_7_days]
+        context["write_off_data"] = [daily_counts[OPERATION_CHOICES.WRITE_OFF][day] for day in last_7_days]
 
-    date_labels = [day.strftime("%d-%m") for day in last_7_days]
-
-    context = {
-        "active_products_count": active_products_count,
-        "total_quantity": total_quantity,
-        "categories_summary": categories_summary,
-        "date_labels": date_labels,
-        "receipt_data": receipt_data,
-        "issue_data": issue_data,
-        "write_off_data": write_off_data,
-    }
-
-    return render(request, "wms/dashboard.html", context)
+        return context
 
 
-def product_list_view(request):
-    query = request.GET.get("q", "")
-    category_id = request.GET.get("category")
+class ProductListView(ListView):
+    model = Product
+    template_name = "wms/products.html"
+    context_object_name = "page_obj"
+    paginate_by = 10
 
-    products = Product.objects.all()
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        query = self.request.GET.get("q", "")
+        category_id = self.request.GET.get("category")
 
-    if query:
-        products = products.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
+        if query:
+            queryset = queryset.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
 
-    if category_id:
-        products = products.filter(category_id=category_id)
+        return queryset.order_by("name")
 
-    products = products.order_by("name")
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.get("q", "")
+        category_id = self.request.GET.get("category")
 
-    paginator = Paginator(products, 10)
-    page_number = request.GET.get("page")
+        total_purchase = 0
+        total_selling = 0
+        total_quantity = 0
 
-    try:
-        page_obj = paginator.get_page(page_number)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
+        for p in context["page_obj"]:
+            if p.purchase_price:
+                total_purchase += p.purchase_price.amount
+            if p.selling_price:
+                total_selling += p.selling_price.amount
+            total_quantity += p.quantity
 
-    total_purchase = 0
-    total_selling = 0
-    total_quantity = 0
+        context.update({
+            "query": query,
+            "category_id": category_id,
+            "total_purchase": total_purchase,
+            "total_selling": total_selling,
+            "total_quantity": total_quantity,
+            "categories": Category.objects.order_by("name"),
+        })
 
-    for p in page_obj:
-        if p.purchase_price:
-            total_purchase += p.purchase_price.amount
-        if p.selling_price:
-            total_selling += p.selling_price.amount
-        total_quantity += p.quantity
-
-    categories = Category.objects.order_by("name")
-
-    context = {
-        "query": query,
-        "category_id": category_id,
-        "page_obj": page_obj,
-        "total_purchase": total_purchase,
-        "total_selling": total_selling,
-        "total_quantity": total_quantity,
-        "categories": categories,
-    }
-    return render(request, "wms/products.html", context)
+        return context

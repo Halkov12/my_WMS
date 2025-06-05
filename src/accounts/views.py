@@ -1,54 +1,49 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import redirect, render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView, LogoutView
+from django.urls import reverse_lazy
+from django.views.generic import TemplateView, FormView, UpdateView
 
 from accounts.forms import CustomerRegistrationForm, ProfileUpdateForm
 
 
-def login_view(request):
-    if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect("wms:index")
-    else:
-        form = AuthenticationForm()
-    return render(request, "accounts/login.html", {"form": form})
+class CustomLoginView(LoginView):
+    template_name = "accounts/login.html"
+    authentication_form = AuthenticationForm
+
+    def get_success_url(self):
+        return reverse_lazy("wms:index")
 
 
-def register_view(request):
-    if request.method == "POST":
-        form = CustomerRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Реєстрація пройшла успішно. Тепер увійдіть у систему.")
-            return redirect("accounts:login")
-    else:
-        form = CustomerRegistrationForm()
-    return render(request, "accounts/register.html", {"form": form})
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy("accounts:login")
 
 
-def logout_view(request):
-    logout(request)
-    return redirect("accounts:login")
+class RegisterView(FormView):
+    template_name = "accounts/register.html"
+    form_class = CustomerRegistrationForm
+    success_url = reverse_lazy("accounts:login")
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, "Registration was successful.")
+        return super().form_valid(form)
 
 
-@login_required
-def profile_view(request):
-    return render(request, "accounts/profile.html", {"user": request.user})
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = "accounts/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["user"] = self.request.user
+        return context
 
 
-@login_required
-def profile_edit_view(request):
-    user = request.user
-    if request.method == "POST":
-        form = ProfileUpdateForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            form.save()
-            return redirect("accounts:profile")
-    else:
-        form = ProfileUpdateForm(instance=user)
-    return render(request, "accounts/profile_edit.html", {"form": form})
+class ProfileEditView(LoginRequiredMixin, UpdateView):
+    template_name = "accounts/profile_edit.html"
+    form_class = ProfileUpdateForm
+    success_url = reverse_lazy("accounts:profile")
+
+    def get_object(self):
+        return self.request.user
