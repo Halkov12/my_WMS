@@ -23,7 +23,6 @@ class ProductDeleteView(DestroyAPIView):
     lookup_field = "pk"
 
 
-
 class ProductListView(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
