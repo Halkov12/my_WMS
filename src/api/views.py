@@ -2,9 +2,10 @@ from rest_framework.generics import (CreateAPIView, DestroyAPIView,
                                      ListAPIView, RetrieveAPIView,
                                      UpdateAPIView)
 
+from api.serializers import ProductSerializer
 from wms.models import Product
 
-from .serializers import ProductSerializer
+
 
 
 class ProductCreateView(CreateAPIView):
