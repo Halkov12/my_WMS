@@ -6,8 +6,6 @@ from api.serializers import ProductSerializer
 from wms.models import Product
 
 
-
-
 class ProductCreateView(CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
