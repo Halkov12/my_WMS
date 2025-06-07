@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Редагування профілю{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm" style="max-width: 600px; margin: 0 auto;">
+        <div class="card-body">
+            <h4 class="mb-4 text-center">Редагувати профіль</h4>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-3">
+                    <button type="submit" class="btn btn-primary">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
