@@ -13,6 +13,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "django_extensions",
+    "rest_framework",
     "djmoney",
     "accounts",
     "common",
