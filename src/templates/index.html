@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Ласкаво просимо{% endblock %}
+
+{% block content %}
+<style>
+  .welcome-container {
+    min-height: 70vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 15px;
+    padding: 3rem 2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    max-width: 700px;
+    text-align: center;
+    animation: fadeInUp 1s ease forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .welcome-container h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  .welcome-container p {
+    font-size: 1.25rem;
+    margin-bottom: 3rem;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+  }
+
+  .btn-primary {
+    background: #5a67d8;
+    border: none;
+    transition: background 0.3s ease;
+  }
+  .btn-primary:hover {
+    background: #434190;
+  }
+
+  .btn-outline-primary {
+    color: #fff;
+    border-color: #fff;
+    transition: all 0.3s ease;
+  }
+  .btn-outline-primary:hover {
+    background: #fff;
+    color: #5a67d8;
+    border-color: #fff;
+  }
+</style>
+
+<div class="d-flex flex-column justify-content-center align-items-center">
+  <div class="welcome-container">
+    <h1>Ласкаво просимо до системи управління складом!</h1>
+    <p>Будь ласка, увійдіть або зареєструйтесь, щоб почати роботу.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg px-5 shadow-sm">
+        Вхід
+      </a>
+      <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg px-5 shadow-sm">
+        Реєстрація
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,3 +1,8 @@
-from django.contrib import admin  # NOQA:F401
+from django.contrib import admin
 
-# Register your models here.
+from accounts.models import Customer
+
+
+@admin.register(Customer)
+class ProductAdmin(admin.ModelAdmin):
+    pass
