@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Звіт по змінах (останній місяць)</h2>
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th>Дата</th>
+      <th>Користувач</th>
+      <th>Дія</th>
+      <th>Товар</th>
+      <th>Деталі</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in changelogs %}
+      <tr>
+        <td>{{ log.created_at }}</td>
+        <td>{{ log.user }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.product }}</td>
+        <td><pre>{{ log.details|json_script:"details" }}</pre></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">Змін не знайдено</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
