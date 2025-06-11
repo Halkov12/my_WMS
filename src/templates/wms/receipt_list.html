@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container py-4">
+
+  <h2 class="mb-4">Прийом товарів</h2>
+
+  <!-- 🛒 Список у кошику -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">🧾 Попередній список</div>
+    <ul class="list-group list-group-flush">
+      {% for item in products_in_cart %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ item.product.name }}</span>
+          <span class="badge bg-primary rounded-pill">{{ item.quantity }}</span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">Список порожній</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- 🔍 Пошук і додавання -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">➕ Додати товар зі списку</div>
+    <div class="card-body">
+      <form method="get" class="mb-3" id="search-form">
+        <div class="position-relative">
+          <input
+            type="text"
+            name="search"
+            placeholder="Пошук за назвою або штрихкодом"
+            value="{{ search_query }}"
+            autocomplete="off"
+            class="form-control"
+            id="searchInput"
+            aria-expanded="false"
+          >
+          <ul class="dropdown-menu w-100 mt-1 shadow-sm" id="productsDropdown" role="listbox">
+            {% for product in products %}
+              <li>
+                <a href="#" class="dropdown-item" data-product-id="{{ product.id }}">
+                  {{ product.name }} <small class="text-muted">({{ product.barcode }})</small>
+                </a>
+              </li>
+            {% empty %}
+              <li class="dropdown-item disabled">Товари не знайдені.</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <button type="submit" class="btn btn-outline-primary mt-2">🔍 Пошук</button>
+      </form>
+
+      <form method="post" id="add-product-form" class="d-flex flex-wrap align-items-end gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="product_id" id="product_id">
+        <div>
+          <label for="quantity" class="form-label mb-0">Кількість</label>
+          <input type="number" name="quantity" id="quantity" value="1" min="0.01" step="0.01" class="form-control" style="width: 120px;">
+        </div>
+        <button type="submit" name="add_product" class="btn btn-success mt-2">➕ Додати</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 🆕 Створити новий товар -->
+  <div class="mb-4 text-center">
+    <a href="{% url 'wms:product_create' %}" class="btn btn-outline-secondary">
+      🛠 Створити новий товар
+    </a>
+  </div>
+
+  <!-- 💾 Збереження -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" class="d-flex flex-column gap-3">
+        {% csrf_token %}
+        <input type="text" name="reason" placeholder="Причина прийому" class="form-control" style="max-width: 400px;">
+        <div class="d-flex gap-2">
+          <button type="submit" name="save_receipt" class="btn btn-primary">💾 Зберегти прийом</button>
+          <button type="submit" name="clear_cart" class="btn btn-secondary">🗑 Очистити</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- JavaScript для вибору товару -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const productIdInput = document.getElementById('product_id');
+    const dropdown = document.getElementById('productsDropdown');
+
+    const items = dropdown.querySelectorAll('.dropdown-item');
+    items.forEach(item => {
+      item.addEventListener('click', function (e) {
+        e.preventDefault();
+        productIdInput.value = this.getAttribute('data-product-id');
+        searchInput.value = this.textContent.trim();
+        dropdown.classList.remove('show');
+      });
+    });
+
+    // Показувати дропдаун при фокусі
+    searchInput.addEventListener('focus', () => {
+      dropdown.classList.add('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+  });
+</script>
+{% endblock %}
