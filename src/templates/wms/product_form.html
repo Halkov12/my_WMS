@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Редагування товару{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Редагування товару: {{ object.name }}</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.barcode.label_tag }}
+            {{ form.barcode }}
+            {{ form.barcode.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.category.label_tag }}
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.purchase_price.label_tag }}
+            {{ form.purchase_price }}
+            {{ form.purchase_price.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.selling_price.label_tag }}
+            {{ form.selling_price }}
+            {{ form.selling_price.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.quantity.label_tag }}
+            {{ form.quantity }}
+            {{ form.quantity.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.unit.label_tag }}
+            {{ form.unit }}
+            {{ form.unit.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-success">Зберегти</button>
+        <a href="{% url 'wms:product_list' %}" class="btn btn-secondary ms-2">Скасувати</a>
+    </form>
+</div>
+{% endblock %}

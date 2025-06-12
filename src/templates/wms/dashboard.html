@@ -26,7 +26,7 @@
                     <i class="bi bi-collection fs-1 text-success me-3"></i>
                     <div>
                         <h5 class="card-title mb-0">Загальна кількість одиниць</h5>
-                        <p class="fs-4 fw-semibold mb-0">{{ total_quantity|floatformat:2 }}</p>
+                        <p class="fs-4 fw-semibold mb-0">{{ total_quantity|default:"0"|floatformat:0 }}</p>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                         <tr>
                             <td>{{ cat.name }}</td>
                             <td class="text-center">{{ cat.active_products_count|default:"0" }}</td>
-                            <td class="text-end">{{ cat.total_quantity|floatformat:2|default:"0" }}</td>
+                            <td class="text-end">{{ cat.total_quantity|default:"0"|floatformat:0 }}</td>
                         </tr>
                     {% empty %}
                         <tr>
@@ -70,7 +70,6 @@
         </div>
     </div>
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

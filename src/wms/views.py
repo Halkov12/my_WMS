@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.views import View
-from django.views.generic import CreateView, ListView, TemplateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from reportlab.pdfgen import canvas
 
 from wms.forms import AddProductForm, ProductCreateForm
@@ -71,7 +71,7 @@ class DashboardView(TemplateView):
 class ProductListView(ListView):
     model = Product
     template_name = "wms/products.html"
-    context_object_name = "page_obj"
+    context_object_name = "products"
     paginate_by = 10
 
     def get_queryset(self):
@@ -95,7 +95,7 @@ class ProductListView(ListView):
         total_selling = 0
         total_quantity = 0
 
-        for p in context["page_obj"]:
+        for p in context["products"]:
             if p.purchase_price:
                 total_purchase += p.purchase_price.amount
             if p.selling_price:
@@ -418,3 +418,110 @@ class ChangeLogReportView(TemplateView):
         changelogs = ChangeLog.objects.filter(created_at__gte=last_30_days).order_by("-created_at")
         context["changelogs"] = changelogs
         return context
+
+
+class IssueView(View):
+    template_name = "wms/issue.html"
+
+    def get(self, request):
+        issue_cart = request.session.get("issue_cart", [])
+        total_items = sum(Decimal(item["quantity"]) for item in issue_cart)
+
+        context = {
+            "issue_cart": issue_cart,
+            "total_items": total_items,
+            "products": Product.objects.filter(is_active=True).order_by("name"),
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        issue_cart = request.session.get("issue_cart", [])
+
+        if "add_product" in request.POST:
+            product_id = request.POST.get("product")
+            try:
+                quantity = Decimal(request.POST.get("quantity", 0))
+            except InvalidOperation:
+                messages.error(request, "Неверное количество")
+                return redirect("wms:issue_list")
+
+            if quantity <= 0:
+                messages.error(request, "Количество должно быть больше 0")
+                return redirect("wms:issue_list")
+
+            product = get_object_or_404(Product, id=product_id)
+
+            if product.quantity < quantity:
+                messages.error(request, f"Недостаточно товара на складе. Доступно: {product.quantity}")
+                return redirect("wms:issue_list")
+
+            for item in issue_cart:
+                if item["product_id"] == int(product_id):
+                    new_quantity = Decimal(item["quantity"]) + quantity
+                    if product.quantity < new_quantity:
+                        messages.error(request, f"Недостаточно товара на складе. Доступно: {product.quantity}")
+                        return redirect("wms:issue_list")
+                    item["quantity"] = str(new_quantity)
+                    break
+            else:
+                issue_cart.append({
+                    "product_id": int(product_id),
+                    "product_name": product.name,
+                    "quantity": str(quantity),
+                    "unit": product.get_unit_display(),
+                })
+
+            request.session["issue_cart"] = issue_cart
+            messages.success(request, "Товар добавлен в список выдачи")
+            return redirect("wms:issue_list")
+
+        elif "remove_product" in request.POST:
+            product_id = request.POST.get("product_id")
+            issue_cart = [item for item in issue_cart if item["product_id"] != int(product_id)]
+            request.session["issue_cart"] = issue_cart
+            messages.success(request, "Товар удален из списка")
+            return redirect("wms:issue_list")
+
+        elif "save_issue" in request.POST:
+            if issue_cart:
+                with transaction.atomic():
+                    operation = StockOperation.objects.create(
+                        operation_type=OPERATION_CHOICES.ISSUE,
+                        created_by=request.user,
+                        reason=request.POST.get("reason", ""),
+                        note=request.POST.get("note", "")
+                    )
+
+                    for item in issue_cart:
+                        product = get_object_or_404(Product, id=item["product_id"])
+                        quantity = Decimal(item["quantity"])
+
+                        if product.quantity < quantity:
+                            messages.error(
+                                request,
+                                f"Недостаточно товара {product.name} на складе. Доступно: {product.quantity}"
+                            )
+                            return redirect("wms:issue_list")
+
+                        StockOperationItem.objects.create(
+                            operation=operation,
+                            product=product,
+                            quantity=quantity
+                        )
+                        product.quantity -= quantity
+                        product.save()
+
+                request.session["issue_cart"] = []
+                messages.success(request, "Выдача товаров сохранена")
+                return redirect("wms:issue_list")
+            else:
+                messages.warning(request, "Список пуст")
+                return redirect("wms:issue_list")
+
+        return self.get(request)
+
+class ProductUpdateView(UpdateView):
+    model = Product
+    form_class = ProductCreateForm
+    template_name = 'wms/product_form.html'
+    success_url = reverse_lazy('wms:product_list')
