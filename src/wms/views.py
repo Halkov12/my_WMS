@@ -464,12 +464,14 @@ class IssueView(View):
                     item["quantity"] = str(new_quantity)
                     break
             else:
-                issue_cart.append({
-                    "product_id": int(product_id),
-                    "product_name": product.name,
-                    "quantity": str(quantity),
-                    "unit": product.get_unit_display(),
-                })
+                issue_cart.append(
+                    {
+                        "product_id": int(product_id),
+                        "product_name": product.name,
+                        "quantity": str(quantity),
+                        "unit": product.get_unit_display(),
+                    }
+                )
 
             request.session["issue_cart"] = issue_cart
             messages.success(request, "Товар добавлен в список выдачи")
@@ -489,7 +491,7 @@ class IssueView(View):
                         operation_type=OPERATION_CHOICES.ISSUE,
                         created_by=request.user,
                         reason=request.POST.get("reason", ""),
-                        note=request.POST.get("note", "")
+                        note=request.POST.get("note", ""),
                     )
 
                     for item in issue_cart:
@@ -498,16 +500,11 @@ class IssueView(View):
 
                         if product.quantity < quantity:
                             messages.error(
-                                request,
-                                f"Недостаточно товара {product.name} на складе. Доступно: {product.quantity}"
+                                request, f"Недостаточно товара {product.name} на складе. Доступно: {product.quantity}"
                             )
                             return redirect("wms:issue_list")
 
-                        StockOperationItem.objects.create(
-                            operation=operation,
-                            product=product,
-                            quantity=quantity
-                        )
+                        StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
                         product.quantity -= quantity
                         product.save()
 
@@ -520,8 +517,9 @@ class IssueView(View):
 
         return self.get(request)
 
+
 class ProductUpdateView(UpdateView):
     model = Product
     form_class = ProductCreateForm
-    template_name = 'wms/product_form.html'
-    success_url = reverse_lazy('wms:product_list')
+    template_name = "wms/product_form.html"
+    success_url = reverse_lazy("wms:product_list")

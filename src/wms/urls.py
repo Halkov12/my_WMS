@@ -1,8 +1,9 @@
 from django.urls import path
 
 from wms.views import (ChangeLogReportView, DashboardView, IndexView,
-                       ProductCreateView, ProductListView, ProductReportView,
-                       ReceiptView, ReportListView, StockOperationReportView, IssueView, ProductUpdateView)
+                       IssueView, ProductCreateView, ProductListView,
+                       ProductReportView, ProductUpdateView, ReceiptView,
+                       ReportListView, StockOperationReportView)
 
 app_name = "wms"
 
@@ -16,6 +17,6 @@ urlpatterns = [
     path("reports/products/", ProductReportView.as_view(), name="product_report"),
     path("reports/stock-operations/", StockOperationReportView.as_view(), name="stock_report"),
     path("reports/change-logs/", ChangeLogReportView.as_view(), name="changelog_report"),
-    path('issue/', IssueView.as_view(), name='issue_list'),
-    path('products/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_edit'),
+    path("issue/", IssueView.as_view(), name="issue_list"),
+    path("products/<int:pk>/edit/", ProductUpdateView.as_view(), name="product_edit"),
 ]
