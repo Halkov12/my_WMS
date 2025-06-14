@@ -1,0 +1,28 @@
+services:
+  backend:
+    build: ./
+    container_name: wms_container
+    working_dir: /wms
+    ports:
+      - "8000:8010"
+    command:
+      - ./commands/start_server_dev.sh
+    volumes:
+      - ./src:/wms/src
+      - ./commands:/wms/commands
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16.4
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  pg_data: { }
