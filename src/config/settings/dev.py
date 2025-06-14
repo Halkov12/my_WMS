@@ -1,3 +1,5 @@
+import os
+
 from config.settings.base import *  # NOQA:F403
 
 SECRET_KEY = "django-insecure-mp3m1$h1($o)*wekb!t2=y$b^u)16t8gt)m6r$xbyxnx647l(4"
@@ -9,9 +11,18 @@ ALLOWED_HOSTS = []
 # MIDDLEWARE + = ['']
 
 DATABASES = {
-    "default": {
+    "default_sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",  # NOQA:F405
+    },
+    "default":{
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB"),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": os.environ.get("POSTGRES_HOST"),
+        "PORT": os.environ.get("POSTGRES_PORT"),
+
     }
 }
 
