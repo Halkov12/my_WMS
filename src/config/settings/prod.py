@@ -1,12 +1,12 @@
 import os
 
-from config.settings.base import *  # NOQA:F403
+from config.settings.base import BASE_DIR  # NOQA:F403,F405
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 DATABASES = {
     "default": {
