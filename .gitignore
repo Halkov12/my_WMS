@@ -63,6 +63,7 @@ db.sqlite3-journal
 static
 media
 migrations
+staticfiles
 
 # Flask stuff:
 instance/
