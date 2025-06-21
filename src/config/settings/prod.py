@@ -1,6 +1,6 @@
 import os
 
-from config.settings.base import BASE_DIR  # NOQA:F403,F405
+from config.settings.base import BASE_DIR
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 

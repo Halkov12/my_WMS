@@ -1,11 +1,6 @@
 import os
 
-from dotenv import load_dotenv
-
 from config.settings.base import *  # NOQA:F403
-
-load_dotenv()
-
 
 SECRET_KEY = "django-insecure-mp3m1$h1($o)*wekb!t2=y$b^u)16t8gt)m6r$xbyxnx647l(4"
 
