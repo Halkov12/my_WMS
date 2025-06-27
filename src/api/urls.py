@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 
 from api.views import (ProductCreateView, ProductDeleteView, ProductDetailView,
-                       ProductListView, ProductUpdateView)
+                       ProductListView, ProductUpdateView, UserRoleView)
 
 app_name = "api"
 
@@ -15,4 +15,5 @@ urlpatterns = [
     path("products/<int:pk>/delete/", ProductDeleteView.as_view(), name="product-delete"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("user/role/", UserRoleView.as_view(), name="user-role"),
 ]

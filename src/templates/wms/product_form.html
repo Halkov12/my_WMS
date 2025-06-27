@@ -1,53 +1,132 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
+{% load i18n %}
 
-{% block title %}Редагування товару{% endblock %}
+{% block title %}Редагувати товар{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:product_list' %}">Товари</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Редагування</li>
+  </ol>
+</nav>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-4">Редагування товару: {{ object.name }}</h2>
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center fw-bold text-primary">
+          <i class="bi bi-pencil"></i> Редагувати товар
+        </h4>
+        
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="{{ form.name.id_for_label }}" class="form-label">Назва товару *</label>
+              {{ form.name }}
+              {% if form.name.errors %}
+              <div class="text-danger small">{{ form.name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.category.id_for_label }}" class="form-label">Категорія</label>
+              {{ form.category }}
+              {% if form.category.errors %}
+              <div class="text-danger small">{{ form.category.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.barcode.id_for_label }}" class="form-label">Штрихкод</label>
+              {{ form.barcode }}
+              {% if form.barcode.errors %}
+              <div class="text-danger small">{{ form.barcode.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.quantity.id_for_label }}" class="form-label">Кількість *</label>
+              {{ form.quantity }}
+              {% if form.quantity.errors %}
+              <div class="text-danger small">{{ form.quantity.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.unit.id_for_label }}" class="form-label">Одиниця виміру</label>
+              {{ form.unit }}
+              {% if form.unit.errors %}
+              <div class="text-danger small">{{ form.unit.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.purchase_price.id_for_label }}" class="form-label">Ціна закупки</label>
+              {{ form.purchase_price.subwidgets.0 }}
+              {% if form.purchase_price.errors %}
+              <div class="text-danger small">{{ form.purchase_price.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.selling_price.id_for_label }}" class="form-label">Ціна продажу</label>
+              {{ form.selling_price.subwidgets.0 }}
+              {% if form.selling_price.errors %}
+              <div class="text-danger small">{{ form.selling_price.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-12">
+              <label for="{{ form.description.id_for_label }}" class="form-label">Опис</label>
+              {{ form.description|add_class:'form-control' }}
+              {% if form.description.errors %}
+                <div class="text-danger small">{{ form.description.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Фото товара -->
+          <div class="my-4">
+            <label class="form-label fw-bold">Фото товару</label>
+            <div class="d-flex align-items-center gap-3">
+              <div id="photo-preview">
+                {% if form.instance.photo %}
+                  <img src="{{ form.instance.photo.url }}" class="img-fluid rounded mb-2" style="max-height:120px;">
+                {% endif %}
+              </div>
+              <div>
+                {{ form.photo|add_class:'form-control' }}
+                {% if form.photo.errors %}
+                  <div class="text-danger small mt-2">{{ form.photo.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
 
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-
-        <div class="mb-3">
-            {{ form.name.label_tag }}
-            {{ form.name }}
-            {{ form.name.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.barcode.label_tag }}
-            {{ form.barcode }}
-            {{ form.barcode.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.category.label_tag }}
-            {{ form.category }}
-            {{ form.category.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.purchase_price.label_tag }}
-            {{ form.purchase_price }}
-            {{ form.purchase_price.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.selling_price.label_tag }}
-            {{ form.selling_price }}
-            {{ form.selling_price.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.quantity.label_tag }}
-            {{ form.quantity }}
-            {{ form.quantity.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.unit.label_tag }}
-            {{ form.unit }}
-            {{ form.unit.errors }}
-        </div>
-
-        <button type="submit" class="btn btn-success">Зберегти</button>
-        <a href="{% url 'wms:product_list' %}" class="btn btn-secondary ms-2">Скасувати</a>
-    </form>
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-check2-circle"></i> Зберегти зміни
+            </button>
+            <a href="{% url 'wms:product_list' %}" class="btn btn-secondary btn-lg">Скасувати</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Скрыть выбор валюты, если поле есть в форме -->
+<style>
+  .field-currency, .field_purchase_price_currency, .field_selling_price_currency { display: none !important; }
+  #id_purchase_price_1, #id_selling_price_1 {
+    display: none !important;
+  }
+</style>
 {% endblock %}

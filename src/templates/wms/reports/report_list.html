@@ -1,31 +1,55 @@
 {% extends "base.html" %}
 
+{% block title %}Звіти{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіти</li>
+  </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">📊 Виберіть звіт</h5>
-                </div>
-                <div class="card-body">
-                    {% if reports %}
-                        <ul class="list-group list-group-flush">
-                            {% for report in reports %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <a href="{% url report.url %}" class="text-decoration-none fw-medium">
-                                        {{ report.title }}
-                                    </a>
-                                    <i class="bi bi-chevron-right text-muted"></i>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted">Немає доступних звітів.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard-data"></i> Звіти</h2>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-box-seam fs-1 text-primary mb-3"></i>
+        <h5 class="card-title">Звіт по товарах</h5>
+        <p class="card-text">Детальний звіт по всіх товарах на складі</p>
+        <a href="{% url 'wms:product_report' %}" class="btn btn-primary">Переглянути</a>
+      </div>
     </div>
+  </div>
+  
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-arrow-left-right fs-1 text-success mb-3"></i>
+        <h5 class="card-title">Звіт по операціях</h5>
+        <p class="card-text">Звіт по руху товарів за період</p>
+        <a href="{% url 'wms:stock_operation_report' %}" class="btn btn-success">Переглянути</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-clock-history fs-1 text-info mb-3"></i>
+        <h5 class="card-title">Звіт по змінах</h5>
+        <p class="card-text">Історія змін в системі</p>
+        <a href="{% url 'wms:changelog_report' %}" class="btn btn-info">Переглянути</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

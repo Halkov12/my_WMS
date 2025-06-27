@@ -1,28 +1,49 @@
 {% extends "base.html" %}
+
+{% block title %}Звіт по змінах{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по змінах</li>
+  </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<h2>Звіт по змінах (останній місяць)</h2>
-<table class="table table-striped table-bordered">
-  <thead>
-    <tr>
-      <th>Дата</th>
-      <th>Користувач</th>
-      <th>Дія</th>
-      <th>Товар</th>
-      <th>Деталі</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for log in changelogs %}
-      <tr>
-        <td>{{ log.created_at }}</td>
-        <td>{{ log.user }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.product }}</td>
-        <td><pre>{{ log.details|json_script:"details" }}</pre></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">Змін не знайдено</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="row">
+  <div class="col-12">
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clock-history"></i> Звіт по змінах</h4>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center table-sticky">
+          <thead class="table-light">
+            <tr>
+              <th>Дата</th>
+              <th>Користувач</th>
+              <th>Опис</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in changelogs %}
+            <tr>
+              <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+              <td>{{ log.user.get_full_name|default:"-" }}</td>
+              <td class="text-start">{{ log.description }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3">Немає змін за останні 30 днів.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

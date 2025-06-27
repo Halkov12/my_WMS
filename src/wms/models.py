@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db import models  # NOQA:F401
 from djmoney.models.fields import MoneyField
+from django.core.exceptions import ValidationError
+from django.db.models.signals import pre_save, post_delete
+from django.dispatch import receiver
 
 from common.models import BaseModel
 
@@ -13,10 +16,10 @@ class Category(models.Model):
 
 
 class UNIT_CHOICES(models.IntegerChoices):
-    PIECES = 1, "pcs"
-    KILOGRAMS = 2, "kgs"
-    LITER = 3, "lt"
-    GRAM = 4, "g"
+    PIECES = 1, "шт"
+    KILOGRAMS = 2, "кг"
+    LITER = 3, "л"
+    GRAM = 4, "г"
 
 
 class Product(BaseModel):
@@ -33,9 +36,19 @@ class Product(BaseModel):
         null=True,
         blank=True,
     )
+    photo = models.ImageField(upload_to='img/products/', null=True, blank=True, verbose_name='Фото')
+    description = models.TextField(blank=True, verbose_name='Опис')
 
     def __str__(self):
         return f"{self.name} {self.selling_price} {self.quantity}"
+
+    def clean(self):
+        super().clean()
+        if self.photo:
+            if self.photo.size > 2*1024*1024:
+                raise ValidationError('Максимальний розмір фото — 2 МБ.')
+            if not self.photo.file.content_type.startswith('image/'):
+                raise ValidationError('Можна завантажувати лише зображення.')
 
 
 class OPERATION_CHOICES(models.IntegerChoices):
@@ -71,3 +84,22 @@ class ChangeLog(BaseModel):
 
     def __str__(self):
         return f"{self.action} {self.product}"
+
+
+@receiver(post_delete, sender=Product)
+def delete_product_photo(sender, instance, **kwargs):
+    if instance.photo:
+        instance.photo.delete(save=False)
+
+
+@receiver(pre_save, sender=Product)
+def auto_delete_old_photo_on_change(sender, instance, **kwargs):
+    if not instance.pk:
+        return
+    try:
+        old_photo = Product.objects.get(pk=instance.pk).photo
+    except Product.DoesNotExist:
+        return
+    new_photo = instance.photo
+    if old_photo and old_photo != new_photo:
+        old_photo.delete(save=False)

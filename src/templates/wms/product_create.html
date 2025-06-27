@@ -1,27 +1,149 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
+{% load i18n %}
+
+{% block title %}Створити товар{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:product_list' %}">Товари</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Створити</li>
+  </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5 d-flex justify-content-center align-items-start" style="min-height: 80vh;">
-  <div class="bg-white p-4 rounded shadow-sm" style="max-width: 480px; width: 100%;">
-    <h4 class="mb-4 text-center fw-bold text-primary">Створити новий товар</h4>
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% for field in form %}
-        <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-          {{ field|add_class:"form-control" }}
-          {% if field.help_text %}
-            <div class="form-text">{{ field.help_text }}</div>
-          {% endif %}
-          {% for error in field.errors %}
-            <div class="text-danger small mt-1">{{ error }}</div>
-          {% endfor %}
-        </div>
-      {% endfor %}
-      <div class="d-grid">
-        <button type="submit" name="create_product" class="btn btn-success btn-lg fw-semibold">Створити</button>
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center fw-bold text-primary">
+          <i class="bi bi-plus-circle"></i> Створити новий товар
+        </h4>
+        
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="{{ form.name.id_for_label }}" class="form-label">Назва товару *</label>
+              {{ form.name }}
+              {% if form.name.errors %}
+              <div class="text-danger small">{{ form.name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.category.id_for_label }}" class="form-label">Категорія</label>
+              {{ form.category }}
+              {% if form.category.errors %}
+              <div class="text-danger small">{{ form.category.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.barcode.id_for_label }}" class="form-label">Штрихкод</label>
+              {{ form.barcode }}
+              {% if form.barcode.errors %}
+              <div class="text-danger small">{{ form.barcode.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.quantity.id_for_label }}" class="form-label">Кількість *</label>
+              {{ form.quantity }}
+              {% if form.quantity.errors %}
+              <div class="text-danger small">{{ form.quantity.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.unit.id_for_label }}" class="form-label">Одиниця виміру</label>
+              {{ form.unit }}
+              {% if form.unit.errors %}
+              <div class="text-danger small">{{ form.unit.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.purchase_price.id_for_label }}" class="form-label">Ціна закупки</label>
+              {{ form.purchase_price }}
+              {% if form.purchase_price.errors %}
+              <div class="text-danger small">{{ form.purchase_price.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="{{ form.selling_price.id_for_label }}" class="form-label">Ціна продажу</label>
+              {{ form.selling_price }}
+              {% if form.selling_price.errors %}
+              <div class="text-danger small">{{ form.selling_price.errors.0 }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-12">
+              <label for="{{ form.description.id_for_label }}" class="form-label">Опис</label>
+              {{ form.description }}
+              {% if form.description.errors %}
+              <div class="text-danger small">{{ form.description.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-check2-circle"></i> Створити товар
+            </button>
+            <a href="{% url 'wms:product_list' %}" class="btn btn-secondary btn-lg">Скасувати</a>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const dropzone = document.getElementById('photo-dropzone');
+const input = dropzone.querySelector('input[type="file"]');
+const preview = document.getElementById('photo-preview');
+const clearBtn = document.getElementById('photo-clear');
+dropzone.addEventListener('click',e=>{
+  if(e.target!==clearBtn) input.click();
+});
+dropzone.addEventListener('dragover',e=>{e.preventDefault();dropzone.classList.add('border-primary');});
+dropzone.addEventListener('dragleave',()=>dropzone.classList.remove('border-primary'));
+dropzone.addEventListener('drop',e=>{
+  e.preventDefault();
+  dropzone.classList.remove('border-primary');
+  input.files = e.dataTransfer.files;
+  showPreview(input.files[0]);
+});
+input.addEventListener('change',()=>showPreview(input.files[0]));
+clearBtn.addEventListener('click',()=>{
+  input.value = '';
+  preview.innerHTML = '';
+  clearBtn.classList.add('d-none');
+});
+function showPreview(file) {
+  if (!file) { preview.innerHTML = ''; clearBtn.classList.add('d-none'); return; }
+  if (!file.type.startsWith('image/')) {
+    preview.innerHTML = `<div class='text-danger small mt-2'><i class='bi bi-exclamation-circle'></i> Можна лише зображення!</div>`;
+    clearBtn.classList.remove('d-none');
+    return;
+  }
+  if (file.size > 2*1024*1024) {
+    preview.innerHTML = `<div class='text-danger small mt-2'><i class='bi bi-exclamation-circle'></i> Максимальний розмір — 2 МБ!</div>`;
+    clearBtn.classList.remove('d-none');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => preview.innerHTML = `<img src='${e.target.result}' class='img-fluid rounded mb-2' style='max-height:120px;'>`;
+  reader.readAsDataURL(file);
+  clearBtn.classList.remove('d-none');
+}
+</script>
 {% endblock %}

@@ -61,15 +61,15 @@
   }
 </style>
 
-<div class="d-flex flex-column justify-content-center align-items-center">
+<div class="d-flex justify-content-center align-items-center">
   <div class="welcome-container">
     <h1>Ласкаво просимо до системи управління складом!</h1>
     <p>Будь ласка, увійдіть або зареєструйтесь, щоб почати роботу.</p>
-    <div class="d-flex justify-content-center gap-3 flex-wrap">
-      <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg px-5 shadow-sm">
+    <div class="d-flex gap-3 justify-content-center">
+      <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg px-4">
         Вхід
       </a>
-      <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg px-5 shadow-sm">
+      <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg px-4">
         Реєстрація
       </a>
     </div>

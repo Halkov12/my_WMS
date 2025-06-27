@@ -3,7 +3,8 @@ from django.urls import path
 from wms.views import (ChangeLogReportView, DashboardView, IndexView,
                        IssueView, ProductCreateView, ProductListView,
                        ProductReportView, ProductUpdateView, ReceiptView,
-                       ReportListView, StockOperationReportView)
+                       ReportListView, StockOperationReportView, WriteOffView,
+                       ToolsView, barcode_generator, export_products_excel, export_products_csv)
 
 app_name = "wms"
 
@@ -19,4 +20,9 @@ urlpatterns = [
     path("reports/change-logs/", ChangeLogReportView.as_view(), name="changelog_report"),
     path("issue/", IssueView.as_view(), name="issue_list"),
     path("products/<int:pk>/edit/", ProductUpdateView.as_view(), name="product_edit"),
+    path("writeoff/", WriteOffView.as_view(), name="writeoff_list"),
+    path("tools/", ToolsView.as_view(), name="tools"),
+    path("tools/barcode/", barcode_generator, name="barcode_generator"),
+    path("tools/export/excel/", export_products_excel, name="export_products_excel"),
+    path("tools/export/csv/", export_products_csv, name="export_products_csv"),
 ]

@@ -1,62 +1,79 @@
 {% load static %}
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="{% url 'wms:index' %}">📦WMS</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-2">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2" href="/">
+            <i class="bi bi-box-seam fs-3"></i> WMS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{% url 'wms:dashboard' %}">Дашборд</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'wms:dashboard' %}"><i class="bi bi-speedometer2"></i> Дашборд</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'wms:product_list' %}">Товари</a></li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Операції
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="operationsDropdown">
-                        <li><a class="dropdown-item" href="{% url 'wms:receipt_list' %}">Прийом</a></li>
-                        <li><a class="dropdown-item" href="{% url 'wms:issue_list' %}">Видача</a></li>
-                        <li><a class="dropdown-item" href="#">Списання</a></li>
-                    </ul>
-                </li>
-
+                <li class="nav-item"><a class="nav-link" href="{% url 'wms:receipt_list' %}">Прийом</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'wms:issue_list' %}">Видача</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'wms:writeoff_list' %}">Списання</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'wms:report_list' %}">Звіти</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'wms:tools' %}">Інструменти</a></li>
             </ul>
-
-            {% if request.user.is_authenticated %}
-            <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#"
-                       id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item d-flex align-items-center">
+                    <button class="btn btn-link nav-link px-2" id="theme-toggle" title="Змінити тему" type="button">
+                        <i class="bi bi-moon-stars-fill d-none" id="theme-dark-ico"></i>
+                        <i class="bi bi-sun-fill d-none" id="theme-light-ico"></i>
+                    </button>
+                </li>
+                {% if request.user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if request.user.photo %}
-                        <img src="{{ user.photo.url }}" alt="avatar" class="rounded-circle me-2"
-                             style="width: 40px; height: 40px; object-fit: cover;">
+                          <img src="{{ request.user.photo.url }}" alt="Аватар" class="rounded-circle border" style="width:28px; height:28px; object-fit:cover;">
                         {% else %}
-                        <div class="bg-secondary text-white d-flex justify-content-center align-items-center rounded-circle me-2"
-                             style="width: 40px; height: 40px;">
-                            <i class="bi bi-person"></i>
-                        </div>
+                          <i class="bi bi-person-circle fs-5"></i>
                         {% endif %}
-                        <span>{{ request.user.get_short_name }}</span>
+                        {{ request.user.get_full_name|default:request.user.email }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Профіль</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> Профіль</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item">Вийти</button>
-                            </form>
-                        </li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right"></i> Вийти</a></li>
                     </ul>
-                </div>
-            </div>
-            {% else %}
-            <a class="btn btn-outline-light ms-2" href="{% url 'accounts:login' %}">Увійти</a>
-            {% endif %}
+                </li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right"></i> Вхід</a></li>
+                {% endif %}
+            </ul>
         </div>
     </div>
 </nav>
+
+<!-- Мобільна навігація -->
+<nav class="navbar navbar-light bg-white border-top fixed-bottom d-md-none shadow-sm" style="z-index:1050;">
+  <div class="container-fluid justify-content-around px-0">
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:dashboard' %}"><i class="bi bi-speedometer2 fs-4"></i><div class="small">Дашборд</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:product_list' %}"><i class="bi bi-box-seam fs-4"></i><div class="small">Товари</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:receipt_list' %}"><i class="bi bi-box-arrow-in-down fs-4"></i><div class="small">Прийом</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:issue_list' %}"><i class="bi bi-box-arrow-up fs-4"></i><div class="small">Видача</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:writeoff_list' %}"><i class="bi bi-x-octagon fs-4"></i><div class="small">Списання</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:report_list' %}"><i class="bi bi-clipboard-data fs-4"></i><div class="small">Звіти</div></a>
+    <a class="nav-link text-center flex-fill" href="{% url 'wms:tools' %}"><i class="bi bi-tools fs-4"></i><div class="small">Інстр.</div></a>
+  </div>
+</nav>
+
+<script>
+(function(){
+  function updateIcon() {
+    const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.getElementById('theme-dark-ico').classList.toggle('d-none', theme!=='light');
+    document.getElementById('theme-light-ico').classList.toggle('d-none', theme!=='dark');
+  }
+  updateIcon();
+  document.getElementById('theme-toggle').onclick = function() {
+    const theme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+    window.setTheme(theme);
+    updateIcon();
+  };
+})();
+</script>

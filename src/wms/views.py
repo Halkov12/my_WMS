@@ -5,26 +5,47 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, F
 from django.db.models.functions import TruncDate
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden, FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from reportlab.pdfgen import canvas
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+import io
+import csv
+import barcode
+from barcode.writer import ImageWriter
+import json
 
 from wms.forms import AddProductForm, ProductCreateForm
 from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Product,
                         StockOperation, StockOperationItem)
+from accounts.models import ROLE_CHOICES
 
 
 class IndexView(TemplateView):
     template_name = "index.html"
 
 
-class DashboardView(TemplateView):
+# Миксин для проверки роли
+class RoleRequiredMixin:
+    allowed_roles = []
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or request.user.role not in self.allowed_roles:
+            return HttpResponseForbidden("Нет доступа")
+        return super().dispatch(request, *args, **kwargs)
+
+
+# Дашборд и отчёты — только для MANAGER
+@method_decorator(login_required, name='dispatch')
+class DashboardView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     template_name = "wms/dashboard.html"
 
     def get_context_data(self, **kwargs):
@@ -34,6 +55,10 @@ class DashboardView(TemplateView):
 
         context["active_products_count"] = Product.objects.filter(is_active=True).count()
         context["total_quantity"] = Product.objects.aggregate(total=Sum("quantity"))["total"] or 0
+        context["total_products_count"] = Product.objects.filter(is_active=True).count()
+        context["total_stock_value"] = float(Product.objects.filter(is_active=True).aggregate(
+            total=Sum(F("purchase_price") * F("quantity"))
+        )["total"] or 0)
 
         context["categories_summary"] = (
             Category.objects.annotate(
@@ -60,15 +85,38 @@ class DashboardView(TemplateView):
         for entry in operations_by_day:
             daily_counts[entry["operation_type"]][entry["day"]] = entry["count"]
 
-        context["date_labels"] = [day.strftime("%d-%m") for day in last_7_days]
-        context["receipt_data"] = [daily_counts[OPERATION_CHOICES.RECEIPT][day] for day in last_7_days]
-        context["issue_data"] = [daily_counts[OPERATION_CHOICES.ISSUE][day] for day in last_7_days]
-        context["write_off_data"] = [daily_counts[OPERATION_CHOICES.WRITE_OFF][day] for day in last_7_days]
+        date_labels = [day.strftime("%d-%m") for day in last_7_days]
+        receipt_data = [daily_counts[OPERATION_CHOICES.RECEIPT][day] for day in last_7_days]
+        issue_data = [daily_counts[OPERATION_CHOICES.ISSUE][day] for day in last_7_days]
+        write_off_data = [daily_counts[OPERATION_CHOICES.WRITE_OFF][day] for day in last_7_days]
+
+        context["date_labels"] = json.dumps(date_labels)
+        context["receipt_data"] = json.dumps(receipt_data)
+        context["issue_data"] = json.dumps(issue_data)
+        context["write_off_data"] = json.dumps(write_off_data)
+
+        # Новое: последние операции (10 штук)
+        recent_ops = StockOperationItem.objects.select_related('operation', 'product').order_by('-operation__created_at')[:10]
+        context['recent_operations'] = [
+            {
+                'date': op.operation.created_at,
+                'type': op.operation.get_operation_type_display().lower(),
+                'product': op.product.name,
+                'quantity': op.quantity,
+            }
+            for op in recent_ops
+        ]
+
+        # Новое: товары с низким остатком (например, меньше 10)
+        context['low_stock_products'] = Product.objects.filter(quantity__lt=10, is_active=True).order_by('quantity')[:10]
 
         return context
 
 
-class ProductListView(ListView):
+# Просмотр товаров и операций — все роли
+@method_decorator(login_required, name='dispatch')
+class ProductListView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER, ROLE_CHOICES.WORKER]
     model = Product
     template_name = "wms/products.html"
     context_object_name = "products"
@@ -116,7 +164,10 @@ class ProductListView(ListView):
         return context
 
 
-class ReceiptView(View):
+# Приёмка, создание/редактирование товаров — только MANAGER
+@method_decorator(login_required, name='dispatch')
+class ReceiptView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     template_name = "wms/receipt_list.html"
 
     def get(self, request):
@@ -217,14 +268,20 @@ class ReceiptView(View):
         return self.get(request)
 
 
-class ProductCreateView(CreateView):
+# Приёмка, создание/редактирование товаров — только MANAGER
+@method_decorator(login_required, name='dispatch')
+class ProductCreateView(RoleRequiredMixin, CreateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     model = Product
     form_class = ProductCreateForm
     template_name = "wms/product_create.html"
     success_url = reverse_lazy("wms:receipt_list")
 
 
-class ReportListView(TemplateView):
+# Отчёты — только для MANAGER
+@method_decorator(login_required, name='dispatch')
+class ReportListView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     template_name = "wms/reports/report_list.html"
 
     def get_context_data(self, **kwargs):
@@ -237,7 +294,9 @@ class ReportListView(TemplateView):
         return context
 
 
-class ProductReportView(ListView):
+@method_decorator(login_required, name='dispatch')
+class ProductReportView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     model = Product
     template_name = "wms/reports/product_report.html"
     context_object_name = "products"
@@ -318,7 +377,9 @@ class ProductReportView(ListView):
         return response
 
 
-class StockOperationReportView(ListView):
+@method_decorator(login_required, name='dispatch')
+class StockOperationReportView(RoleRequiredMixin, ListView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     model = StockOperation
     template_name = "wms/reports/stock_operation_report.html"
     context_object_name = "operations"
@@ -409,7 +470,9 @@ class StockOperationReportView(ListView):
         return response
 
 
-class ChangeLogReportView(TemplateView):
+@method_decorator(login_required, name='dispatch')
+class ChangeLogReportView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     template_name = "wms/reports/changelog_report.html"
 
     def get_context_data(self, **kwargs):
@@ -420,7 +483,10 @@ class ChangeLogReportView(TemplateView):
         return context
 
 
-class IssueView(View):
+# Выдача и списание — MANAGER и SELLER
+@method_decorator(login_required, name='dispatch')
+class IssueView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
     template_name = "wms/issue.html"
 
     def get(self, request):
@@ -442,24 +508,24 @@ class IssueView(View):
             try:
                 quantity = Decimal(request.POST.get("quantity", 0))
             except InvalidOperation:
-                messages.error(request, "Неверное количество")
+                messages.error(request, "Некоректна кількість")
                 return redirect("wms:issue_list")
 
             if quantity <= 0:
-                messages.error(request, "Количество должно быть больше 0")
+                messages.error(request, "Кількість має бути більшою за 0")
                 return redirect("wms:issue_list")
 
             product = get_object_or_404(Product, id=product_id)
 
             if product.quantity < quantity:
-                messages.error(request, f"Недостаточно товара на складе. Доступно: {product.quantity}")
+                messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
                 return redirect("wms:issue_list")
 
             for item in issue_cart:
                 if item["product_id"] == int(product_id):
                     new_quantity = Decimal(item["quantity"]) + quantity
                     if product.quantity < new_quantity:
-                        messages.error(request, f"Недостаточно товара на складе. Доступно: {product.quantity}")
+                        messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
                         return redirect("wms:issue_list")
                     item["quantity"] = str(new_quantity)
                     break
@@ -474,14 +540,14 @@ class IssueView(View):
                 )
 
             request.session["issue_cart"] = issue_cart
-            messages.success(request, "Товар добавлен в список выдачи")
+            messages.success(request, "Товар додано до списку видачі")
             return redirect("wms:issue_list")
 
         elif "remove_product" in request.POST:
             product_id = request.POST.get("product_id")
             issue_cart = [item for item in issue_cart if item["product_id"] != int(product_id)]
             request.session["issue_cart"] = issue_cart
-            messages.success(request, "Товар удален из списка")
+            messages.success(request, "Товар видалено зі списку")
             return redirect("wms:issue_list")
 
         elif "save_issue" in request.POST:
@@ -500,7 +566,7 @@ class IssueView(View):
 
                         if product.quantity < quantity:
                             messages.error(
-                                request, f"Недостаточно товара {product.name} на складе. Доступно: {product.quantity}"
+                                request, f"Недостатньо товару на складі. Доступно: {product.quantity}"
                             )
                             return redirect("wms:issue_list")
 
@@ -509,17 +575,190 @@ class IssueView(View):
                         product.save()
 
                 request.session["issue_cart"] = []
-                messages.success(request, "Выдача товаров сохранена")
+                messages.success(request, "Видачу товарів збережено")
                 return redirect("wms:issue_list")
             else:
-                messages.warning(request, "Список пуст")
+                messages.warning(request, "Список порожній")
                 return redirect("wms:issue_list")
 
         return self.get(request)
 
 
-class ProductUpdateView(UpdateView):
+@method_decorator(login_required, name='dispatch')
+class ProductUpdateView(RoleRequiredMixin, UpdateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     model = Product
     form_class = ProductCreateForm
     template_name = "wms/product_form.html"
     success_url = reverse_lazy("wms:product_list")
+
+
+@method_decorator(login_required, name='dispatch')
+class WriteOffView(RoleRequiredMixin, View):
+    allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
+    template_name = "wms/writeoff.html"
+
+    def get(self, request):
+        writeoff_cart = request.session.get("writeoff_cart", [])
+        total_items = sum(Decimal(item["quantity"]) for item in writeoff_cart)
+
+        context = {
+            "writeoff_cart": writeoff_cart,
+            "total_items": total_items,
+            "products": Product.objects.filter(is_active=True).order_by("name"),
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        writeoff_cart = request.session.get("writeoff_cart", [])
+
+        if "add_product" in request.POST:
+            product_id = request.POST.get("product")
+            try:
+                quantity = Decimal(request.POST.get("quantity", 0))
+            except InvalidOperation:
+                messages.error(request, "Неверное количество")
+                return redirect("wms:writeoff_list")
+
+            if quantity <= 0:
+                messages.error(request, "Кількість має бути більшою за 0")
+                return redirect("wms:writeoff_list")
+
+            product = get_object_or_404(Product, id=product_id)
+
+            if product.quantity < quantity:
+                messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
+                return redirect("wms:writeoff_list")
+
+            for item in writeoff_cart:
+                if item["product_id"] == int(product_id):
+                    new_quantity = Decimal(item["quantity"]) + quantity
+                    if product.quantity < new_quantity:
+                        messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
+                        return redirect("wms:writeoff_list")
+                    item["quantity"] = str(new_quantity)
+                    break
+            else:
+                writeoff_cart.append(
+                    {
+                        "product_id": int(product_id),
+                        "product_name": product.name,
+                        "quantity": str(quantity),
+                        "unit": product.get_unit_display(),
+                    }
+                )
+
+            request.session["writeoff_cart"] = writeoff_cart
+            messages.success(request, "Товар додано до списку списання")
+            return redirect("wms:writeoff_list")
+
+        elif "remove_product" in request.POST:
+            product_id = request.POST.get("product_id")
+            writeoff_cart = [item for item in writeoff_cart if item["product_id"] != int(product_id)]
+            request.session["writeoff_cart"] = writeoff_cart
+            messages.success(request, "Товар видалено зі списку")
+            return redirect("wms:writeoff_list")
+
+        elif "save_writeoff" in request.POST:
+            if writeoff_cart:
+                with transaction.atomic():
+                    operation = StockOperation.objects.create(
+                        operation_type=OPERATION_CHOICES.WRITE_OFF,
+                        created_by=request.user,
+                        reason=request.POST.get("reason", ""),
+                        note=request.POST.get("note", ""),
+                    )
+
+                    for item in writeoff_cart:
+                        product = get_object_or_404(Product, id=item["product_id"])
+                        quantity = Decimal(item["quantity"])
+
+                        if product.quantity < quantity:
+                            messages.error(
+                                request, f"Недостатньо товару на складі. Доступно: {product.quantity}"
+                            )
+                            return redirect("wms:writeoff_list")
+
+                        StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
+                        product.quantity -= quantity
+                        product.save()
+
+                request.session["writeoff_cart"] = []
+                messages.success(request, "Списання товарів збережено")
+                return redirect("wms:writeoff_list")
+            else:
+                messages.warning(request, "Список порожній")
+                return redirect("wms:writeoff_list")
+
+        return self.get(request)
+
+
+@method_decorator(login_required, name='dispatch')
+class ToolsView(RoleRequiredMixin, TemplateView):
+    allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER, ROLE_CHOICES.WORKER]
+    template_name = "wms/tools.html"
+
+
+@login_required
+def barcode_generator(request):
+    if request.method == "GET" and request.GET.get("free") == "1":
+        import random
+        while True:
+            code = str(random.randint(10**11, 10**12-1))  # 12-значный
+            if not Product.objects.filter(barcode=code).exists():
+                return JsonResponse({"barcode": code})
+    if request.method == "POST":
+        code = request.POST.get("barcode_text", "")
+        if not code:
+            return HttpResponse("Введіть текст для генерації штрихкоду", status=400)
+        if Product.objects.filter(barcode=code).exists():
+            return HttpResponse("Такий штрихкод вже існує в базі! Введіть інший.", status=400)
+        ean = barcode.get('ean13', code.zfill(12), writer=ImageWriter())
+        buffer = io.BytesIO()
+        ean.write(buffer)
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f"barcode_{code}.png", content_type="image/png")
+    return HttpResponseForbidden()
+
+
+@login_required
+def export_products_excel(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Товари"
+    ws.append(["Назва", "Штрихкод", "Категорія", "Ціна закупки", "Ціна продажу", "Кількість", "Одиниця"])
+    for p in Product.objects.all():
+        ws.append([
+            p.name,
+            p.barcode,
+            p.category.name if p.category else "-",
+            str(p.purchase_price),
+            str(p.selling_price),
+            float(p.quantity),
+            p.get_unit_display(),
+        ])
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="products.xlsx", content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@login_required
+def export_products_csv(request):
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["Назва", "Штрихкод", "Категорія", "Ціна закупки", "Ціна продажу", "Кількість", "Одиниця"])
+    for p in Product.objects.all():
+        writer.writerow([
+            p.name,
+            p.barcode,
+            p.category.name if p.category else "-",
+            str(p.purchase_price),
+            str(p.selling_price),
+            float(p.quantity),
+            p.get_unit_display(),
+        ])
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="text/csv")
+    response["Content-Disposition"] = "attachment; filename=products.csv"
+    return response

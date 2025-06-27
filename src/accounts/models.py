@@ -2,7 +2,6 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from accounts.managers import CustomerManager
@@ -15,50 +14,46 @@ class ROLE_CHOICES(models.IntegerChoices):
 
 
 class Customer(AbstractBaseUser, PermissionsMixin):
-    first_name = models.CharField(_("name"), max_length=150, blank=True)
-    last_name = models.CharField(_("surname"), max_length=150, blank=True)
-
+    first_name = models.CharField("Ім'я", max_length=150, blank=True)
+    last_name = models.CharField("Прізвище", max_length=150, blank=True)
     email = models.EmailField(
-        _("email address"),
+        "Email адреса",
         unique=True,
         error_messages={
-            "unique": _("A user with that email already exists."),
+            "unique": "Користувач з таким email вже існує.",
         },
     )
-    phone_number = PhoneNumberField(_("phone number"), null=True, blank=True)
-
+    phone_number = PhoneNumberField("Номер телефону", null=True, blank=True)
     is_staff = models.BooleanField(
-        _("staff status"),
+        "Статус персоналу",
         default=False,
-        help_text=_("Designates whether the user can log into this admin site."),
+        help_text="Визначає, чи може користувач увійти в адмін-панель.",
     )
     is_active = models.BooleanField(
-        _("active"),
+        "Активний",
         default=True,
-        help_text=_(
-            "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
+        help_text=(
+            "Визначає, чи слід розглядати цього користувача як активного. "
+            "Зніміть цей прапорець замість видалення облікових записів."
         ),
     )
-    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
-    birth_date = models.DateTimeField(_("birth date"), blank=True, null=True)
-    photo = models.ImageField(_("photo"), upload_to="img/profiles", null=True, blank=True)
+    date_joined = models.DateTimeField("Дата реєстрації", default=timezone.now)
+    birth_date = models.DateTimeField("Дата народження", blank=True, null=True)
+    photo = models.ImageField("Фото", upload_to="img/profiles", null=True, blank=True)
     role = models.PositiveIntegerField(choices=ROLE_CHOICES, default=ROLE_CHOICES.SELLER)
-
-    objects = CustomerManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    class Meta:
-        verbose_name = _("customer")
-        verbose_name_plural = _("customers")
+    objects = CustomerManager()
 
-    def clean(self):
-        super().clean()
-        self.email = self.__class__.objects.normalize_email(self.email)
+    def __str__(self):
+        return self.email
 
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.email
 
     def get_short_name(self):
         """Return the short name for the user."""
@@ -66,3 +61,11 @@ class Customer(AbstractBaseUser, PermissionsMixin):
 
     def get_registration_duration(self):
         return timezone.now() - self.date_joined
+
+    class Meta:
+        verbose_name = "Користувач"
+        verbose_name_plural = "Користувачі"
+
+    def clean(self):
+        super().clean()
+        self.email = self.__class__.objects.normalize_email(self.email)

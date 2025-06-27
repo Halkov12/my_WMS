@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Видача товарів{% endblock %}
+{% block title %}Списання товарів{% endblock %}
 
 {% block breadcrumbs %}
 <nav aria-label="breadcrumb" class="mb-4">
   <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
     <li class="breadcrumb-item"><a href="/">Головна</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Видача</li>
+    <li class="breadcrumb-item active" aria-current="page">Списання</li>
   </ol>
 </nav>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-  <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-box-arrow-up"></i> Видача товарів</h2>
+  <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-x-octagon"></i> Списання товарів</h2>
   <div class="row g-4">
     <div class="col-lg-6">
       <div class="card mb-4 shadow-sm">
@@ -41,9 +41,9 @@
     </div>
     <div class="col-lg-6">
       <div class="card shadow-sm">
-        <div class="card-header bg-info text-white fw-bold"><i class="bi bi-list-check"></i> Список товарів для видачі</div>
+        <div class="card-header bg-info text-white fw-bold"><i class="bi bi-list-check"></i> Список товарів для списання</div>
         <div class="card-body">
-          {% if issue_cart %}
+          {% if writeoff_cart %}
           <form method="post">
             {% csrf_token %}
             <div class="table-responsive mb-3">
@@ -57,7 +57,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for item in issue_cart %}
+                  {% for item in writeoff_cart %}
                   <tr>
                     <td>{{ item.product_name }}</td>
                     <td>{{ item.quantity }}</td>
@@ -72,14 +72,14 @@
               </table>
             </div>
             <div class="mb-3">
-              <label for="reason" class="form-label fw-bold">Причина видачі <span class="text-danger">*</span></label>
-              <input type="text" name="reason" id="reason" class="form-control" required placeholder="Вкажіть причину видачі">
+              <label for="reason" class="form-label fw-bold">Причина списання <span class="text-danger">*</span></label>
+              <input type="text" name="reason" id="reason" class="form-control" required placeholder="Вкажіть причину списання">
             </div>
             <div class="mb-3">
               <label for="note" class="form-label">Примітка</label>
               <textarea name="note" id="note" class="form-control" rows="3"></textarea>
             </div>
-            <button type="submit" name="save_issue" class="btn btn-primary"><i class="bi bi-save"></i> Зберегти видачу</button>
+            <button type="submit" name="save_writeoff" class="btn btn-primary"><i class="bi bi-save"></i> Зберегти списання</button>
           </form>
           {% else %}
           <p class="text-center text-muted">Список порожній</p>
@@ -133,4 +133,4 @@ document.getElementById('confirmRemove').onclick = function() {
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %} 

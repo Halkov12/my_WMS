@@ -1,24 +1,71 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
 {% block title %}Профіль{% endblock %}
 
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Профіль</li>
+  </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm" style="max-width: 600px; margin: 0 auto;">
-        <div class="card-body text-center">
-            {% if user.photo %}
-                <img src="{{ user.photo.url }}" alt="avatar" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
-            {% else %}
-                <div class="bg-secondary text-white d-flex justify-content-center align-items-center rounded-circle mb-3" style="width: 120px; height: 120px;">
-                    <i class="bi bi-person" style="font-size: 3rem;"></i>
-                </div>
-            {% endif %}
-            <h4>{{ user.get_full_name }}</h4>
-            <p class="text-muted">{{ user.email }}</p>
-            <p>Телефон: {{ user.phone_number|default:"Немає" }}</p>
-            <p>Дата реєстрації: {{ user.date_joined|date:"d.m.Y" }}</p>
-            <p>Роль: {{ user.get_role_display }}</p>
-            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary mt-3">Редагувати профіль</a>
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          {% if user.photo %}
+          <img src="{{ user.photo.url }}" alt="Фото профілю" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+          {% else %}
+          <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+            <i class="bi bi-person fs-1 text-muted"></i>
+          </div>
+          {% endif %}
+          <h4 class="fw-bold">{{ user.get_full_name|default:user.email }}</h4>
         </div>
+        
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Ім'я</label>
+            <p class="form-control-plaintext">{{ user.first_name|default:"Не вказано" }}</p>
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Прізвище</label>
+            <p class="form-control-plaintext">{{ user.last_name|default:"Не вказано" }}</p>
+          </div>
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold">Email</label>
+            <p class="form-control-plaintext">{{ user.email }}</p>
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Номер телефону</label>
+            <p class="form-control-plaintext">{{ user.phone_number|default:"Не вказано" }}</p>
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Дата народження</label>
+            <p class="form-control-plaintext">{{ user.birth_date|date:"d.m.Y"|default:"Не вказано" }}</p>
+          </div>
+          
+          <div class="col-12">
+            <label class="form-label fw-semibold">Дата реєстрації</label>
+            <p class="form-control-plaintext">{{ user.date_joined|date:"d.m.Y H:i" }}</p>
+          </div>
+        </div>
+        
+        <div class="d-grid mt-4">
+          <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-pencil"></i> Редагувати профіль
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

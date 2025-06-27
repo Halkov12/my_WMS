@@ -1,9 +1,11 @@
 from rest_framework.generics import (CreateAPIView, DestroyAPIView,
                                      ListAPIView, RetrieveAPIView,
                                      UpdateAPIView)
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
-from api.serializers import ProductSerializer
+from api.serializers import ProductSerializer, ProductDetailSerializer, UserRoleSerializer
 from wms.models import Product
 
 
@@ -34,6 +36,13 @@ class ProductListView(ListAPIView):
 
 class ProductDetailView(RetrieveAPIView):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    serializer_class = ProductDetailSerializer
+    permission_classes = [AllowAny]
     lookup_field = "pk"
+
+
+class UserRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        serializer = UserRoleSerializer(request.user)
+        return Response(serializer.data)
