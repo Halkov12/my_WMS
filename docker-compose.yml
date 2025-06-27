@@ -6,15 +6,16 @@ services:
     ports:
       - "8000:8010"
     command:
-      ./commands/start_server_dev.sh
+      ./commands/start_server_${MODE}.sh
     volumes:
       - ./src:/wms/src
       - ./commands:/wms/commands
+      - static_content:/wms/src/static
+      - media_content:/wms/src/media
     env_file:
       - .env
     depends_on:
       - postgres
-      - mongo
 
   postgres:
     image: postgres:17.5
@@ -38,30 +39,22 @@ services:
     depends_on:
       - postgres
 
-  mongo:
-    image: mongo:6
-    container_name: mongo_container
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
+  nginx:
+    image: nginx:1.19
     volumes:
-      - mongo_data:/data/db
-    environment:
-      MONGO_INITDB_DATABASE: my_mongo_db
-
-  mongo-express:
-    image: mongo-express
-    container_name: mongo_express_container
-    restart: unless-stopped
+      - static_content:/wms/src/static
+      - media_content:/wms/src/media
+      - ./nginx:/etc/nginx/conf.d
     ports:
-      - "8081:8081"
+      - "80:80"
+      - "443:443"
     env_file:
       - .env
-
     depends_on:
-      - mongo
+      - backend
 
 volumes:
   pg_data: { }
   pg_admin: { }
-  mongo_data: { }
+  static_content: { }
+  media_content: { }
