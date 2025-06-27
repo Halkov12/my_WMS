@@ -22,6 +22,7 @@ import csv
 import barcode
 from barcode.writer import ImageWriter
 import json
+from django import forms
 
 from wms.forms import AddProductForm, ProductCreateForm
 from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Product,
@@ -762,3 +763,107 @@ def export_products_csv(request):
     response = HttpResponse(buffer, content_type="text/csv")
     response["Content-Disposition"] = "attachment; filename=products.csv"
     return response
+
+
+class ImportProductsForm(forms.Form):
+    file = forms.FileField(label='Файл CSV/Excel', required=True)
+
+@login_required
+def import_products(request):
+    if request.method == 'POST':
+        form = ImportProductsForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = form.cleaned_data['file']
+            ext = file.name.split('.')[-1].lower()
+            added, errors = 0, []
+            import csv
+            import openpyxl
+            try:
+                if ext == 'csv':
+                    decoded = file.read().decode('utf-8').splitlines()
+                    reader = csv.DictReader(decoded)
+                    for row in reader:
+                        try:
+                            Product.objects.create(
+                                name=row.get('name', ''),
+                                barcode=row.get('barcode', ''),
+                                quantity=row.get('quantity', 0) or 0,
+                                unit=row.get('unit', 1) or 1,
+                                purchase_price=row.get('purchase_price', 0) or 0,
+                                selling_price=row.get('selling_price', 0) or 0,
+                                description=row.get('description', ''),
+                            )
+                            added += 1
+                        except Exception as e:
+                            errors.append(str(e))
+                elif ext in ['xlsx', 'xls']:
+                    wb = openpyxl.load_workbook(file)
+                    ws = wb.active
+                    headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        data = dict(zip(headers, row))
+                        try:
+                            Product.objects.create(
+                                name=data.get('name', ''),
+                                barcode=data.get('barcode', ''),
+                                quantity=data.get('quantity', 0) or 0,
+                                unit=data.get('unit', 1) or 1,
+                                purchase_price=data.get('purchase_price', 0) or 0,
+                                selling_price=data.get('selling_price', 0) or 0,
+                                description=data.get('description', ''),
+                            )
+                            added += 1
+                        except Exception as e:
+                            errors.append(str(e))
+                else:
+                    messages.error(request, 'Підтримуються лише CSV та Excel файли.')
+                    return redirect('wms:import_products')
+                if added:
+                    messages.success(request, f'Імпортовано {added} товарів.')
+                if errors:
+                    messages.error(request, f'Помилки: {"; ".join(errors)}')
+                return redirect('wms:import_products')
+            except Exception as e:
+                messages.error(request, f'Помилка імпорту: {e}')
+                return redirect('wms:import_products')
+    else:
+        form = ImportProductsForm()
+    return render(request, 'wms/import_products.html', {'form': form})
+
+@csrf_exempt
+@login_required
+def preview_import_products(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']
+        ext = file.name.split('.')[-1].lower()
+        import csv, openpyxl
+        preview_data = []
+        headers = []
+        try:
+            if ext == 'csv':
+                decoded = file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded)
+                headers = reader.fieldnames
+                for i, row in enumerate(reader):
+                    if i >= 5: break
+                    preview_data.append([row.get(h, '') for h in headers])
+            elif ext in ['xlsx', 'xls']:
+                wb = openpyxl.load_workbook(file)
+                ws = wb.active
+                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+                for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
+                    if i >= 5: break
+                    preview_data.append(list(row))
+            else:
+                return JsonResponse({'error': 'Підтримуються лише CSV та Excel файли.'}, status=400)
+            html = '<table class="table table-bordered table-sm"><thead><tr>'
+            for h in headers:
+                html += f'<th>{h}</th>'
+            html += '</tr></thead><tbody>'
+            for row in preview_data:
+                html += '<tr>' + ''.join(f'<td>{v}</td>' for v in row) + '</tr>'
+            html += '</tbody></table>'
+            return JsonResponse({'html': html})
+        except Exception as e:
+            return JsonResponse({'error': f'Помилка: {e}'}, status=400)
+    return JsonResponse({'error': 'Невірний запит.'}, status=400)

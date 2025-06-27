@@ -1,12 +1,33 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 from accounts.models import Customer
 
 
-class EmailLoginForm(forms.Form):
-    email = forms.EmailField(label="Email")
+class EmailLoginForm(AuthenticationForm):
+    username = forms.EmailField(label="Email")
     password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Email'
+        self.fields['username'].widget.attrs['autofocus'] = True
+        self.fields['password'].label = 'Пароль'
+
+    def clean(self):
+        email = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+        if email and password:
+            from django.contrib.auth import authenticate
+            self.user_cache = authenticate(self.request, email=email, password=password)
+            if self.user_cache is None:
+                raise forms.ValidationError(
+                    self.error_messages.get('invalid_login', "Невірний email або пароль."),
+                    code='invalid_login',
+                )
+            else:
+                self.confirm_login_allowed(self.user_cache)
+        return self.cleaned_data
 
 
 class CustomerRegistrationForm(UserCreationForm):

@@ -4,7 +4,7 @@ from wms.views import (ChangeLogReportView, DashboardView, IndexView,
                        IssueView, ProductCreateView, ProductListView,
                        ProductReportView, ProductUpdateView, ReceiptView,
                        ReportListView, StockOperationReportView, WriteOffView,
-                       ToolsView, barcode_generator, export_products_excel, export_products_csv)
+                       ToolsView, barcode_generator, export_products_excel, export_products_csv, import_products, preview_import_products)
 
 app_name = "wms"
 
@@ -25,4 +25,6 @@ urlpatterns = [
     path("tools/barcode/", barcode_generator, name="barcode_generator"),
     path("tools/export/excel/", export_products_excel, name="export_products_excel"),
     path("tools/export/csv/", export_products_csv, name="export_products_csv"),
+    path("tools/import/", import_products, name="import_products"),
+    path("tools/import/preview/", preview_import_products, name="preview_import_products"),
 ]

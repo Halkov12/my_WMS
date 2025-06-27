@@ -5,12 +5,12 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView, UpdateView
 
-from accounts.forms import CustomerRegistrationForm, ProfileUpdateForm
+from accounts.forms import CustomerRegistrationForm, ProfileUpdateForm, EmailLoginForm
 
 
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"
-    authentication_form = AuthenticationForm
+    authentication_form = EmailLoginForm
 
     def get_success_url(self):
         return reverse_lazy("wms:index")
