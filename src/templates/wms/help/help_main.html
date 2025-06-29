@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-question-circle"></i> Довідка по системі
+    </h2>
+    <p class="lead mb-4">Ласкаво просимо до довідки Warehouse Management System. Тут ви знайдете всю необхідну інформацію для роботи з системою.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-box-seam text-success" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Товари</h5>
+        <p class="card-text">Управління товарами: створення, редагування, пошук та фільтрація товарів на складі.</p>
+        <a href="{% url 'wms:help_products' %}" class="btn btn-outline-success">Детальніше</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-arrow-left-right text-warning" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Операції</h5>
+        <p class="card-text">Складські операції: прийом, видача та списання товарів з детальним логуванням.</p>
+        <a href="{% url 'wms:help_operations' %}" class="btn btn-outline-warning">Детальніше</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-clipboard-data text-info" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Звіти</h5>
+        <p class="card-text">Генерація звітів по товарах, операціях та змінах з можливістю експорту в PDF/Excel.</p>
+        <a href="{% url 'wms:help_reports' %}" class="btn btn-outline-info">Детальніше</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-tools text-secondary" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Інструменти</h5>
+        <p class="card-text">Додаткові інструменти: імпорт/експорт, резервне копіювання, генератор штрихкодів.</p>
+        <a href="{% url 'wms:help_tools' %}" class="btn btn-outline-secondary">Детальніше</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-question-circle text-danger" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">FAQ</h5>
+        <p class="card-text">Часто задавані питання та відповіді по використанню системи та вирішенню проблем.</p>
+        <a href="{% url 'wms:help_faq' %}" class="btn btn-outline-danger">Детальніше</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-5">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-3"><i class="bi bi-lightbulb"></i> Швидкий старт</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Для нових користувачів:</h5>
+            <ol>
+              <li>Ознайомтеся з <a href="{% url 'wms:help_products' %}">управлінням товарами</a></li>
+              <li>Вивчіть <a href="{% url 'wms:help_operations' %}">складські операції</a></li>
+              <li>Перегляньте <a href="{% url 'wms:help_faq' %}">FAQ</a> для поширених питань</li>
+            </ol>
+          </div>
+          <div class="col-md-6">
+            <h5>Для досвідчених користувачів:</h5>
+            <ol>
+              <li>Використовуйте <a href="{% url 'wms:help_tools' %}">інструменти</a> для ефективності</li>
+              <li>Генеруйте <a href="{% url 'wms:help_reports' %}">звіти</a> для аналітики</li>
+              <li>Регулярно створюйте резервні копії</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 
 import openpyxl
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Count, Q, Sum, F
 from django.db.models.functions import TruncDate
@@ -12,7 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.views import View
-from django.views.generic import CreateView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView, DeleteView
 from reportlab.pdfgen import canvas
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -23,11 +24,24 @@ import barcode
 from barcode.writer import ImageWriter
 import json
 from django import forms
+from django.core import management
+from django.core.files.storage import default_storage
+from django.conf import settings
+import tempfile
+from functools import wraps
+import pandas as pd
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
 
-from wms.forms import AddProductForm, ProductCreateForm
+from wms.forms import AddProductForm, ProductCreateForm, ProductForm, StockOperationForm
 from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Product,
                         StockOperation, StockOperationItem)
-from accounts.models import ROLE_CHOICES
+from accounts.models import ROLE_CHOICES, Customer
+from common.models import Setting
+from wms.utils import (
+    get_products_stats, get_categories_with_stats, get_low_stock_products,
+    get_recent_operations, check_barcode_exists
+)
 
 
 class IndexView(TemplateView):
@@ -54,22 +68,40 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         today = datetime.today().date()
         last_7_days = [today - timedelta(days=i) for i in reversed(range(7))]
 
-        context["active_products_count"] = Product.objects.filter(is_active=True).count()
-        context["total_quantity"] = Product.objects.aggregate(total=Sum("quantity"))["total"] or 0
-        context["total_products_count"] = Product.objects.filter(is_active=True).count()
-        context["total_stock_value"] = float(Product.objects.filter(is_active=True).aggregate(
-            total=Sum(F("purchase_price") * F("quantity"))
-        )["total"] or 0)
+        # Используем утилиты с кэшированием
+        products_stats = get_products_stats()
+        context["active_products_count"] = products_stats["count"] or 0
+        context["total_quantity"] = products_stats["total_quantity"] or 0
+        context["total_products_count"] = products_stats["count"] or 0
+        context["total_stock_value"] = float(products_stats["total_value"] or 0)
 
-        context["categories_summary"] = (
+        # Используем утилиты для категорий
+        context["categories_data"] = get_categories_with_stats().values("name", "active_products", "total_quantity")
+
+        # Данные для графика "Остатки по категориям"
+        category_stock_data = (
             Category.objects.annotate(
-                active_products_count=Count("product", filter=Q(product__is_active=True)),
-                total_quantity=Sum("product__quantity"),
+                total_quantity=Sum("product__quantity", filter=Q(product__is_active=True))
             )
-            .filter(active_products_count__gt=0, total_quantity__gt=0)
-            .values("name", "active_products_count", "total_quantity")
+            .filter(total_quantity__gt=0)
+            .values("name", "total_quantity")
+            .order_by("-total_quantity")
         )
+        
+        context["category_chart_labels"] = json.dumps([cat["name"] for cat in category_stock_data])
+        context["category_chart_data"] = json.dumps([float(cat["total_quantity"]) for cat in category_stock_data])
 
+        # Данные для графика "ТОП-5 товаров по количеству"
+        top_products_by_quantity = (
+            Product.objects.filter(is_active=True, quantity__gt=0)
+            .order_by("-quantity")
+            .values("name", "quantity")[:5]
+        )
+        
+        context["top_products_labels"] = json.dumps([prod["name"] for prod in top_products_by_quantity])
+        context["top_products_data"] = json.dumps([float(prod["quantity"]) for prod in top_products_by_quantity])
+
+        # Оптимизация: один запрос для операций с группировкой
         operations_by_day = (
             StockOperation.objects.filter(created_at__date__gte=last_7_days[0])
             .annotate(day=TruncDate("created_at"))
@@ -96,20 +128,20 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         context["issue_data"] = json.dumps(issue_data)
         context["write_off_data"] = json.dumps(write_off_data)
 
-        # Новое: последние операции (10 штук)
-        recent_ops = StockOperationItem.objects.select_related('operation', 'product').order_by('-operation__created_at')[:10]
+        # Используем утилиты для последних операций
+        recent_ops = get_recent_operations(10)
         context['recent_operations'] = [
             {
                 'date': op.operation.created_at,
-                'type': op.operation.get_operation_type_display().lower(),
+                'type': op.operation.operation_type,
                 'product': op.product.name,
                 'quantity': op.quantity,
             }
             for op in recent_ops
         ]
 
-        # Новое: товары с низким остатком (например, меньше 10)
-        context['low_stock_products'] = Product.objects.filter(quantity__lt=10, is_active=True).order_by('quantity')[:10]
+        # Используем утилиты для товаров с низким остатком
+        context['low_stock_products'] = get_low_stock_products(10, 10)
 
         return context
 
@@ -120,48 +152,155 @@ class ProductListView(RoleRequiredMixin, ListView):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER, ROLE_CHOICES.WORKER]
     model = Product
     template_name = "wms/products.html"
-    context_object_name = "products"
+    context_object_name = "page_obj"
     paginate_by = 10
 
     def get_queryset(self):
         queryset = Product.objects.all()
         query = self.request.GET.get("q", "")
         category_id = self.request.GET.get("category")
+        stock_status = self.request.GET.get("stock_status")
+        price_range = self.request.GET.get("price_range")
+        sort = self.request.GET.get("sort", "name")
 
+        # Поиск по назве или штрихкоду
         if query:
             queryset = queryset.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
+        
+        # Фильтр по категории
         if category_id:
             queryset = queryset.filter(category_id=category_id)
+        
+        # Фильтр по наличию
+        if stock_status:
+            if stock_status == "in_stock":
+                queryset = queryset.filter(quantity__gt=0)
+            elif stock_status == "low_stock":
+                queryset = queryset.filter(quantity__lt=5, quantity__gt=0)
+            elif stock_status == "out_of_stock":
+                queryset = queryset.filter(quantity=0)
+        
+        # Фильтр по ценовому диапазону
+        if price_range:
+            if price_range == "0-100":
+                queryset = queryset.filter(selling_price__amount__lte=100)
+            elif price_range == "100-500":
+                queryset = queryset.filter(selling_price__amount__gt=100, selling_price__amount__lte=500)
+            elif price_range == "500-1000":
+                queryset = queryset.filter(selling_price__amount__gt=500, selling_price__amount__lte=1000)
+            elif price_range == "1000+":
+                queryset = queryset.filter(selling_price__amount__gt=1000)
 
-        return queryset.order_by("name")
+        # Сортировка
+        if sort == "name":
+            queryset = queryset.order_by("name")
+        elif sort == "-name":
+            queryset = queryset.order_by("-name")
+        elif sort == "quantity":
+            queryset = queryset.order_by("quantity")
+        elif sort == "-quantity":
+            queryset = queryset.order_by("-quantity")
+        elif sort == "selling_price":
+            queryset = queryset.order_by("selling_price__amount")
+        elif sort == "-selling_price":
+            queryset = queryset.order_by("-selling_price__amount")
+        elif sort == "created_at":
+            queryset = queryset.order_by("created_at")
+        elif sort == "-created_at":
+            queryset = queryset.order_by("-created_at")
+        else:
+            queryset = queryset.order_by("name")
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get("q", "")
         category_id = self.request.GET.get("category")
+        stock_status = self.request.GET.get("stock_status")
+        price_range = self.request.GET.get("price_range")
+        sort = self.request.GET.get("sort", "name")
 
+        # Отримуємо базовий queryset для підрахунку загальних сум
+        base_queryset = Product.objects.all()
+        
+        # Застосовуємо ті ж фільтри, що й для списку товарів
+        if query:
+            base_queryset = base_queryset.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
+        if category_id:
+            base_queryset = base_queryset.filter(category_id=category_id)
+        if stock_status:
+            if stock_status == "in_stock":
+                base_queryset = base_queryset.filter(quantity__gt=0)
+            elif stock_status == "low_stock":
+                base_queryset = base_queryset.filter(quantity__lt=5, quantity__gt=0)
+            elif stock_status == "out_of_stock":
+                base_queryset = base_queryset.filter(quantity=0)
+        if price_range:
+            if price_range == "0-100":
+                base_queryset = base_queryset.filter(selling_price__amount__lte=100)
+            elif price_range == "100-500":
+                base_queryset = base_queryset.filter(selling_price__amount__gt=100, selling_price__amount__lte=500)
+            elif price_range == "500-1000":
+                base_queryset = base_queryset.filter(selling_price__amount__gt=500, selling_price__amount__lte=1000)
+            elif price_range == "1000+":
+                base_queryset = base_queryset.filter(selling_price__amount__gt=1000)
+
+        # Підраховуємо загальні суми для всього складу (з урахуванням фільтрів)
         total_purchase = 0
         total_selling = 0
         total_quantity = 0
 
-        for p in context["products"]:
+        for p in base_queryset:
             if p.purchase_price:
                 total_purchase += p.purchase_price.amount
             if p.selling_price:
                 total_selling += p.selling_price.amount
             total_quantity += p.quantity
 
+        # Получаем названия для отображения активных фильтров
+        selected_category_name = ""
+        if category_id:
+            try:
+                category = Category.objects.get(id=category_id)
+                selected_category_name = category.name
+            except Category.DoesNotExist:
+                pass
+
+        stock_status_display = ""
+        if stock_status == "in_stock":
+            stock_status_display = "В наявності"
+        elif stock_status == "low_stock":
+            stock_status_display = "Низький залишок"
+        elif stock_status == "out_of_stock":
+            stock_status_display = "Немає в наявності"
+
+        price_range_display = ""
+        if price_range == "0-100":
+            price_range_display = "До 100 грн"
+        elif price_range == "100-500":
+            price_range_display = "100-500 грн"
+        elif price_range == "500-1000":
+            price_range_display = "500-1000 грн"
+        elif price_range == "1000+":
+            price_range_display = "Більше 1000 грн"
+
         context.update(
             {
                 "query": query,
-                "category_id": category_id,
+                "selected_category": category_id,
+                "selected_category_name": selected_category_name,
+                "stock_status": stock_status,
+                "stock_status_display": stock_status_display,
+                "price_range": price_range,
+                "price_range_display": price_range_display,
+                "sort": sort,
                 "total_purchase": total_purchase,
                 "total_selling": total_selling,
                 "total_quantity": total_quantity,
-                "categories": Category.objects.order_by("name"),
+                "categories": Category.objects.all(),
             }
         )
-
         return context
 
 
@@ -387,17 +526,35 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by("-created_at")
+        queryset = super().get_queryset()
         date_from = self.request.GET.get("date_from")
         date_to = self.request.GET.get("date_to")
         operation_type = self.request.GET.get("operation_type")
+        sort = self.request.GET.get("sort", "-created_at")
 
+        # Фильтрация
         if date_from:
             queryset = queryset.filter(created_at__gte=date_from)
         if date_to:
             queryset = queryset.filter(created_at__lte=date_to)
         if operation_type:
             queryset = queryset.filter(operation_type=operation_type)
+
+        # Сортировка
+        if sort == "created_at":
+            queryset = queryset.order_by("created_at")
+        elif sort == "-created_at":
+            queryset = queryset.order_by("-created_at")
+        elif sort == "operation_type":
+            queryset = queryset.order_by("operation_type")
+        elif sort == "-operation_type":
+            queryset = queryset.order_by("-operation_type")
+        elif sort == "created_by":
+            queryset = queryset.order_by("created_by__first_name", "created_by__last_name")
+        elif sort == "-created_by":
+            queryset = queryset.order_by("-created_by__first_name", "-created_by__last_name")
+        else:
+            queryset = queryset.order_by("-created_at")
 
         return queryset
 
@@ -406,6 +563,7 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
         context["date_from"] = self.request.GET.get("date_from", "")
         context["date_to"] = self.request.GET.get("date_to", "")
         context["operation_type"] = self.request.GET.get("operation_type", "")
+        context["sort"] = self.request.GET.get("sort", "-created_at")
         context["operation_choices"] = StockOperation._meta.get_field("operation_type").choices
         return context
 
@@ -433,8 +591,8 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
                 [
                     op.get_operation_type_display(),
                     op.created_by.get_full_name() if op.created_by else "-",
-                    op.reason,
-                    op.note,
+                    op.reason or "-",
+                    op.note or "-",
                     items_str,
                     op.created_at.strftime("%Y-%m-%d %H:%M"),
                 ]
@@ -459,7 +617,7 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
             items_str = ", ".join([f"{item.product.name}({item.quantity})" for item in op.items.all()])
             line = (
                 f"{op.get_operation_type_display()} | {op.created_by.get_full_name() if op.created_by else '-'} |"
-                f" {op.reason} | {items_str} | {op.created_at.strftime('%Y-%m-%d %H:%M')}"
+                f" {op.reason or '-'} | {items_str} | {op.created_at.strftime('%Y-%m-%d %H:%M')}"
             )
             p.drawString(20, y, line)
             y -= 20
@@ -595,6 +753,19 @@ class ProductUpdateView(RoleRequiredMixin, UpdateView):
 
 
 @method_decorator(login_required, name='dispatch')
+class ProductDeleteView(RoleRequiredMixin, DeleteView):
+    allowed_roles = [ROLE_CHOICES.MANAGER]
+    model = Product
+    template_name = "wms/product_confirm_delete.html"
+    success_url = reverse_lazy("wms:product_list")
+    
+    def delete(self, request, *args, **kwargs):
+        product = self.get_object()
+        messages.success(request, f"Товар '{product.name}' успішно видалено.")
+        return super().delete(request, *args, **kwargs)
+
+
+@method_decorator(login_required, name='dispatch')
 class WriteOffView(RoleRequiredMixin, View):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
     template_name = "wms/writeoff.html"
@@ -696,8 +867,18 @@ class WriteOffView(RoleRequiredMixin, View):
 
 @method_decorator(login_required, name='dispatch')
 class ToolsView(RoleRequiredMixin, TemplateView):
-    allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER, ROLE_CHOICES.WORKER]
+    allowed_roles = [ROLE_CHOICES.MANAGER]
     template_name = "wms/tools.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        import random
+        while True:
+            code = str(random.randint(10**11, 10**12-1))
+            if not check_barcode_exists(code):
+                context['default_barcode'] = code
+                break
+        return context
 
 
 @login_required
@@ -706,164 +887,538 @@ def barcode_generator(request):
         import random
         while True:
             code = str(random.randint(10**11, 10**12-1))  # 12-значный
-            if not Product.objects.filter(barcode=code).exists():
+            if not check_barcode_exists(code):
                 return JsonResponse({"barcode": code})
     if request.method == "POST":
-        code = request.POST.get("barcode_text", "")
+        import json as pyjson
+        try:
+            data = pyjson.loads(request.body.decode())
+            code = data.get("text", "")
+        except Exception:
+            code = request.POST.get("barcode_text", "")
         if not code:
-            return HttpResponse("Введіть текст для генерації штрихкоду", status=400)
-        if Product.objects.filter(barcode=code).exists():
-            return HttpResponse("Такий штрихкод вже існує в базі! Введіть інший.", status=400)
+            return JsonResponse({"success": False, "error": "Введіть текст для генерації штрихкоду"}, status=400)
+        if check_barcode_exists(code):
+            return JsonResponse({"success": False, "error": "Такий штрихкод вже існує в базі! Введіть інший."}, status=400)
         ean = barcode.get('ean13', code.zfill(12), writer=ImageWriter())
         buffer = io.BytesIO()
         ean.write(buffer)
         buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename=f"barcode_{code}.png", content_type="image/png")
+        import base64
+        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        img_url = f"data:image/png;base64,{img_base64}"
+        return JsonResponse({"success": True, "barcode_url": img_url})
     return HttpResponseForbidden()
 
 
-@login_required
+def manager_required(view_func):
+    """Декоратор для проверки роли менеджера"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        if request.user.role != ROLE_CHOICES.MANAGER:
+            messages.error(request, "Доступ заборонено. Потрібні права менеджера.")
+            return redirect('wms:dashboard')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def manager_required_mixin(view_class):
+    """Mixin для проверки роли менеджера в class-based views"""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        if request.user.role != ROLE_CHOICES.MANAGER:
+            messages.error(request, "Доступ заборонено. Потрібні права менеджера.")
+            return redirect('wms:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
+    view_class.dispatch = dispatch
+    return view_class
+
+@manager_required
+def export_products_csv(request):
+    """Експорт товарів в CSV формат (тільки для менеджерів)"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="products_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Назва', 'Штрихкод', 'Категорія', 'Кількість', 'Одиниця', 'Закупівельна ціна', 'Продажна ціна', 'Опис'])
+    
+    products = Product.objects.filter(is_active=True)
+    for product in products:
+        writer.writerow([
+            product.name,
+            product.barcode or '',
+            product.category.name if product.category else '',
+            product.quantity,
+            product.get_unit_display(),
+            product.purchase_price.amount if product.purchase_price else '',
+            product.selling_price.amount if product.selling_price else '',
+            product.description or ''
+        ])
+    
+    return response
+
+@manager_required
 def export_products_excel(request):
+    """Експорт товарів в Excel формат (тільки для менеджерів)"""
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="products_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+    
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Товари"
-    ws.append(["Назва", "Штрихкод", "Категорія", "Ціна закупки", "Ціна продажу", "Кількість", "Одиниця"])
-    for p in Product.objects.all():
-        ws.append([
-            p.name,
-            p.barcode,
-            p.category.name if p.category else "-",
-            str(p.purchase_price),
-            str(p.selling_price),
-            float(p.quantity),
-            p.get_unit_display(),
-        ])
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename="products.xlsx", content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-
-@login_required
-def export_products_csv(request):
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow(["Назва", "Штрихкод", "Категорія", "Ціна закупки", "Ціна продажу", "Кількість", "Одиниця"])
-    for p in Product.objects.all():
-        writer.writerow([
-            p.name,
-            p.barcode,
-            p.category.name if p.category else "-",
-            str(p.purchase_price),
-            str(p.selling_price),
-            float(p.quantity),
-            p.get_unit_display(),
-        ])
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type="text/csv")
-    response["Content-Disposition"] = "attachment; filename=products.csv"
+    
+    # Заголовки
+    headers = ['Назва', 'Штрихкод', 'Категорія', 'Кількість', 'Одиниця', 'Закупівельна ціна', 'Продажна ціна', 'Опис']
+    for col, header in enumerate(headers, 1):
+        ws.cell(row=1, column=col, value=header)
+    
+    # Дані
+    products = Product.objects.filter(is_active=True)
+    for row, product in enumerate(products, 2):
+        ws.cell(row=row, column=1, value=product.name)
+        ws.cell(row=row, column=2, value=product.barcode or '')
+        ws.cell(row=row, column=3, value=product.category.name if product.category else '')
+        ws.cell(row=row, column=4, value=float(product.quantity))
+        ws.cell(row=row, column=5, value=product.get_unit_display())
+        ws.cell(row=row, column=6, value=float(product.purchase_price.amount) if product.purchase_price else '')
+        ws.cell(row=row, column=7, value=float(product.selling_price.amount) if product.selling_price else '')
+        ws.cell(row=row, column=8, value=product.description or '')
+    
+    wb.save(response)
     return response
 
-
 class ImportProductsForm(forms.Form):
-    file = forms.FileField(label='Файл CSV/Excel', required=True)
+    file = forms.FileField(label="Оберіть файл (CSV або Excel)")
 
-@login_required
+@manager_required
 def import_products(request):
     if request.method == 'POST':
-        form = ImportProductsForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['file']
-            ext = file.name.split('.')[-1].lower()
-            added, errors = 0, []
-            import csv
-            import openpyxl
-            try:
-                if ext == 'csv':
-                    decoded = file.read().decode('utf-8').splitlines()
-                    reader = csv.DictReader(decoded)
-                    for row in reader:
-                        try:
-                            Product.objects.create(
-                                name=row.get('name', ''),
-                                barcode=row.get('barcode', ''),
-                                quantity=row.get('quantity', 0) or 0,
-                                unit=row.get('unit', 1) or 1,
-                                purchase_price=row.get('purchase_price', 0) or 0,
-                                selling_price=row.get('selling_price', 0) or 0,
-                                description=row.get('description', ''),
-                            )
-                            added += 1
-                        except Exception as e:
-                            errors.append(str(e))
-                elif ext in ['xlsx', 'xls']:
-                    wb = openpyxl.load_workbook(file)
-                    ws = wb.active
-                    headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                    for row in ws.iter_rows(min_row=2, values_only=True):
-                        data = dict(zip(headers, row))
-                        try:
-                            Product.objects.create(
-                                name=data.get('name', ''),
-                                barcode=data.get('barcode', ''),
-                                quantity=data.get('quantity', 0) or 0,
-                                unit=data.get('unit', 1) or 1,
-                                purchase_price=data.get('purchase_price', 0) or 0,
-                                selling_price=data.get('selling_price', 0) or 0,
-                                description=data.get('description', ''),
-                            )
-                            added += 1
-                        except Exception as e:
-                            errors.append(str(e))
-                else:
-                    messages.error(request, 'Підтримуються лише CSV та Excel файли.')
-                    return redirect('wms:import_products')
-                if added:
-                    messages.success(request, f'Імпортовано {added} товарів.')
-                if errors:
-                    messages.error(request, f'Помилки: {"; ".join(errors)}')
-                return redirect('wms:import_products')
-            except Exception as e:
-                messages.error(request, f'Помилка імпорту: {e}')
-                return redirect('wms:import_products')
+        file = request.FILES.get('file')
+        if not file:
+            messages.error(request, 'Будь ласка, виберіть файл для імпорту.')
+            form = ImportProductsForm()
+            return render(request, 'wms/import_products.html', {'form': form})
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file.name.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file)
+            else:
+                messages.error(request, 'Непідтримуваний формат файлу. Використовуйте CSV або Excel.')
+                form = ImportProductsForm()
+                return render(request, 'wms/import_products.html', {'form': form})
+            required_columns = ['name', 'quantity', 'purchase_price', 'sale_price']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                messages.error(request, f'Відсутні обов\'язкові колонки: {", ".join(missing_columns)}')
+                form = ImportProductsForm()
+                return render(request, 'wms/import_products.html', {'form': form})
+            request.session['import_data'] = df.to_dict('records')
+            request.session['import_filename'] = file.name
+            return redirect('wms:preview_import_products')
+        except Exception as e:
+            messages.error(request, f'Помилка при обробці файлу: {str(e)}')
+            form = ImportProductsForm()
+            return render(request, 'wms/import_products.html', {'form': form})
     else:
         form = ImportProductsForm()
     return render(request, 'wms/import_products.html', {'form': form})
 
-@csrf_exempt
-@login_required
+@manager_required
 def preview_import_products(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        file = request.FILES['file']
-        ext = file.name.split('.')[-1].lower()
-        import csv, openpyxl
-        preview_data = []
-        headers = []
+    """Попередній перегляд імпорту товарів (тільки для менеджерів)"""
+    import_data = request.session.get('import_data')
+    filename = request.session.get('import_filename')
+    
+    if not import_data:
+        messages.error(request, 'Немає даних для імпорту.')
+        return redirect('wms:tools')
+    
+    # Показуємо перші 5 рядків
+    preview_data = import_data[:5]
+    
+    if request.method == 'POST':
         try:
-            if ext == 'csv':
-                decoded = file.read().decode('utf-8').splitlines()
-                reader = csv.DictReader(decoded)
-                headers = reader.fieldnames
-                for i, row in enumerate(reader):
-                    if i >= 5: break
-                    preview_data.append([row.get(h, '') for h in headers])
-            elif ext in ['xlsx', 'xls']:
-                wb = openpyxl.load_workbook(file)
-                ws = wb.active
-                headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-                for i, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
-                    if i >= 5: break
-                    preview_data.append(list(row))
+            created_count = 0
+            updated_count = 0
+            
+            for row in import_data:
+                name = row.get('name', '').strip()
+                if not name:
+                    continue
+                
+                # Перевіряємо чи існує товар
+                product, created = Product.objects.get_or_create(
+                    name=name,
+                    defaults={
+                        'quantity': float(row.get('quantity', 0)),
+                        'purchase_price': float(row.get('purchase_price', 0)),
+                        'selling_price': float(row.get('sale_price', 0)),
+                        'barcode': row.get('barcode', '').strip(),
+                        'description': row.get('description', '').strip(),
+                        'unit': int(row.get('unit', 1)),
+                    }
+                )
+                
+                if created:
+                    created_count += 1
+                else:
+                    # Оновлюємо існуючий товар
+                    product.quantity = float(row.get('quantity', 0))
+                    product.purchase_price = float(row.get('purchase_price', 0))
+                    product.selling_price = float(row.get('sale_price', 0))
+                    product.save()
+                    updated_count += 1
+            
+            # Очищаємо сесію
+            del request.session['import_data']
+            del request.session['import_filename']
+            
+            messages.success(request, f'Імпорт завершено! Створено: {created_count}, оновлено: {updated_count}')
+            return redirect('wms:product_list')
+            
+        except Exception as e:
+            messages.error(request, f'Помилка при імпорті: {str(e)}')
+            return redirect('wms:tools')
+    
+    context = {
+        'preview_data': preview_data,
+        'filename': filename,
+        'total_rows': len(import_data)
+    }
+    return render(request, 'wms/import_products.html', context)
+
+@manager_required
+def backup_products(request):
+    """Резервна копія товарів (тільки для менеджерів)"""
+    from django.core.serializers import serialize
+    
+    products = Product.objects.filter(is_active=True)
+    data = serialize('json', products)
+    
+    response = HttpResponse(data, content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="products_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+    
+    messages.success(request, 'Резервна копія товарів створена успішно!')
+    return response
+
+@manager_required
+def restore_products(request):
+    """Відновлення товарів з резервної копії (тільки для менеджерів)"""
+    if request.method == 'POST':
+        file = request.FILES.get('backup_file')
+        if not file:
+            messages.error(request, 'Будь ласка, виберіть файл резервної копії.')
+            return redirect('wms:tools')
+        
+        try:
+            data = json.load(file)
+            restored_count = 0
+            
+            for item in data:
+                if item['model'] == 'wms.product':
+                    fields = item['fields']
+                    product, created = Product.objects.get_or_create(
+                        name=fields['name'],
+                        defaults={
+                            'barcode': fields.get('barcode', ''),
+                            'purchase_price': fields.get('purchase_price', 0),
+                            'selling_price': fields.get('selling_price', 0),
+                            'unit': fields.get('unit', 1),
+                            'quantity': fields.get('quantity', 0),
+                            'is_active': fields.get('is_active', True),
+                            'description': fields.get('description', ''),
+                        }
+                    )
+                    if created:
+                        restored_count += 1
+            
+            messages.success(request, f'Відновлено {restored_count} товарів!')
+            return redirect('wms:product_list')
+            
+        except Exception as e:
+            messages.error(request, f'Помилка при відновленні: {str(e)}')
+            return redirect('wms:tools')
+    
+    return render(request, 'wms/restore_products.html')
+
+@manager_required
+def backup_all_data(request):
+    """Повна резервна копія всіх даних (тільки для менеджерів)"""
+    from django.core.serializers import serialize
+    from accounts.models import Customer
+    
+    # Збираємо дані з усіх моделей
+    data = []
+    
+    # Користувачі
+    users = Customer.objects.all()
+    data.extend(serialize('python', users))
+    
+    # Категорії
+    categories = Category.objects.all()
+    data.extend(serialize('python', categories))
+    
+    # Товари
+    products = Product.objects.all()
+    data.extend(serialize('python', products))
+    
+    # Операції
+    operations = StockOperation.objects.all()
+    data.extend(serialize('python', operations))
+    
+    # Елементи операцій
+    operation_items = StockOperationItem.objects.all()
+    data.extend(serialize('python', operation_items))
+    
+    # Зміни
+    changes = ChangeLog.objects.all()
+    data.extend(serialize('python', changes))
+    
+    response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="full_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+    
+    messages.success(request, 'Повна резервна копія створена успішно!')
+    return response
+
+@manager_required
+def restore_all_data(request):
+    """Відновлення всіх даних з резервної копії (тільки для менеджерів)"""
+    if request.method == 'POST':
+        file = request.FILES.get('backup_file')
+        if not file:
+            messages.error(request, 'Будь ласка, виберіть файл резервної копії.')
+            return redirect('wms:tools')
+        
+        try:
+            data = json.load(file)
+            restored_counts = {
+                'users': 0,
+                'categories': 0,
+                'products': 0,
+                'operations': 0,
+                'operation_items': 0,
+                'changes': 0
+            }
+            
+            for item in data:
+                model_name = item['model']
+                fields = item['fields']
+                
+                if model_name == 'accounts.customer':
+                    user, created = Customer.objects.get_or_create(
+                        email=fields['email'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['users'] += 1
+                
+                elif model_name == 'wms.category':
+                    category, created = Category.objects.get_or_create(
+                        name=fields['name'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['categories'] += 1
+                
+                elif model_name == 'wms.product':
+                    product, created = Product.objects.get_or_create(
+                        name=fields['name'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['products'] += 1
+                
+                elif model_name == 'wms.stockoperation':
+                    operation, created = StockOperation.objects.get_or_create(
+                        id=item['pk'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['operations'] += 1
+                
+                elif model_name == 'wms.stockoperationitem':
+                    item_obj, created = StockOperationItem.objects.get_or_create(
+                        id=item['pk'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['operation_items'] += 1
+                
+                elif model_name == 'wms.changelog':
+                    change, created = ChangeLog.objects.get_or_create(
+                        id=item['pk'],
+                        defaults=fields
+                    )
+                    if created:
+                        restored_counts['changes'] += 1
+            
+            total_restored = sum(restored_counts.values())
+            messages.success(request, f'Відновлено {total_restored} записів!')
+            return redirect('wms:dashboard')
+            
+        except Exception as e:
+            messages.error(request, f'Помилка при відновленні: {str(e)}')
+            return redirect('wms:tools')
+    
+    return render(request, 'wms/restore_all_data.html')
+
+class HelpView(TemplateView):
+    template_name = "wms/help/help_main.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['help_sections'] = [
+            {
+                'title': 'Головна',
+                'icon': 'bi-house',
+                'description': 'Загальний огляд системи WMS',
+                'url': 'wms:help_main'
+            },
+            {
+                'title': 'Товари',
+                'icon': 'bi-box-seam',
+                'description': 'Управління товарами та категоріями',
+                'url': 'wms:help_products'
+            },
+            {
+                'title': 'Операції',
+                'icon': 'bi-arrow-left-right',
+                'description': 'Прийом, видача та списання товарів',
+                'url': 'wms:help_operations'
+            },
+            {
+                'title': 'Звіти',
+                'icon': 'bi-clipboard-data',
+                'description': 'Генерація та перегляд звітів',
+                'url': 'wms:help_reports'
+            },
+            {
+                'title': 'Інструменти',
+                'icon': 'bi-tools',
+                'description': 'Імпорт/експорт та резервне копіювання',
+                'url': 'wms:help_tools'
+            },
+            {
+                'title': 'FAQ',
+                'icon': 'bi-question-circle',
+                'description': 'Часто задавані питання',
+                'url': 'wms:help_faq'
+            }
+        ]
+        return context
+
+class HelpProductsView(TemplateView):
+    template_name = "wms/help/help_products.html"
+
+class HelpOperationsView(TemplateView):
+    template_name = "wms/help/help_operations.html"
+
+class HelpReportsView(TemplateView):
+    template_name = "wms/help/help_reports.html"
+
+class HelpToolsView(TemplateView):
+    template_name = "wms/help/help_tools.html"
+
+class HelpFaqView(TemplateView):
+    template_name = "wms/help/help_faq.html"
+
+class BarcodeGeneratorView(LoginRequiredMixin, TemplateView):
+    template_name = "wms/barcode_generator.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Генерируем уникальный штрих-код по умолчанию
+        import random
+        while True:
+            code = str(random.randint(10**11, 10**12-1))  # 12-значный код
+            if not Product.objects.filter(barcode=code).exists():
+                context['default_barcode'] = code
+                break
+        return context
+
+@manager_required
+def preview_import_products_ajax(request):
+    """AJAX-предпросмотр файла импорта товаров (без сохранения в базу)"""
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        file = request.FILES.get('file')
+        if not file:
+            return JsonResponse({'error': 'Будь ласка, виберіть файл для імпорту.'})
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file.name.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file)
             else:
-                return JsonResponse({'error': 'Підтримуються лише CSV та Excel файли.'}, status=400)
-            html = '<table class="table table-bordered table-sm"><thead><tr>'
-            for h in headers:
-                html += f'<th>{h}</th>'
-            html += '</tr></thead><tbody>'
-            for row in preview_data:
-                html += '<tr>' + ''.join(f'<td>{v}</td>' for v in row) + '</tr>'
-            html += '</tbody></table>'
+                return JsonResponse({'error': 'Непідтримуваний формат файлу. Використовуйте CSV або Excel.'})
+            preview_data = df.head(5).to_dict('records')
+            html = render_to_string('wms/import_preview_table.html', {'preview_data': preview_data})
             return JsonResponse({'html': html})
         except Exception as e:
-            return JsonResponse({'error': f'Помилка: {e}'}, status=400)
-    return JsonResponse({'error': 'Невірний запит.'}, status=400)
+            return JsonResponse({'error': f'Помилка при обробці файлу: {str(e)}'})
+    return JsonResponse({'error': 'Некоректний запит.'})
+
+@manager_required
+def send_email_to_managers(request):
+    """Відправка email менеджерам, працівникам або вказаним адресам"""
+    if request.method == 'POST':
+        recipient_type = request.POST.get('recipient_type')
+        custom_email = request.POST.get('custom_email', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+        
+        if not subject or not message:
+            messages.error(request, "Тема та повідомлення обов'язкові.")
+            return redirect('wms:tools')
+        
+        recipients = []
+        
+        if recipient_type == 'managers':
+            # Отримуємо всіх менеджерів
+            managers = Customer.objects.filter(role=ROLE_CHOICES.MANAGER, is_active=True)
+            recipients = [manager.email for manager in managers]
+        elif recipient_type == 'employees':
+            # Отримуємо всіх працівників (SELLER та WORKER)
+            employees = Customer.objects.filter(
+                Q(role=ROLE_CHOICES.SELLER) | Q(role=ROLE_CHOICES.WORKER),
+                is_active=True
+            )
+            recipients = [employee.email for employee in employees]
+        elif recipient_type == 'custom' and custom_email:
+            # Користувач ввів власний email
+            recipients = [email.strip() for email in custom_email.split(',') if email.strip()]
+        
+        if not recipients:
+            messages.error(request, "Не вказано отримувачів email.")
+            return redirect('wms:tools')
+        
+        try:
+            # Відправляємо email
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=None,  # Використовуємо DEFAULT_FROM_EMAIL з налаштувань
+                recipient_list=recipients,
+                fail_silently=False,
+            )
+            
+            messages.success(request, f"Email успішно відправлено {len(recipients)} отримувачам.")
+            
+        except Exception as e:
+            messages.error(request, f"Помилка при відправці email: {str(e)}")
+        
+        return redirect('wms:tools')
+    
+    # GET запит - показуємо форму
+    context = {
+        'managers_count': Customer.objects.filter(role=ROLE_CHOICES.MANAGER, is_active=True).count(),
+        'employees_count': Customer.objects.filter(
+            Q(role=ROLE_CHOICES.SELLER) | Q(role=ROLE_CHOICES.WORKER),
+            is_active=True
+        ).count(),
+    }
+    
+    return render(request, 'wms/send_email.html', context)

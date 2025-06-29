@@ -1,14 +1,16 @@
 import os
 
 from config.settings.base import *  # NOQA:F403
+from django.conf import settings
 
-SECRET_KEY = "django-insecure-mp3m1$h1($o)*wekb!t2=y$b^u)16t8gt)m6r$xbyxnx647l(4"
+SECRET_KEY = env('SECRET_KEY', default='dev-secret-key')
 
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 # MIDDLEWARE + = ['']
+
 if os.environ.get("GITHUB_WORKFLOW"):
     DATABASES = {
         "default": {
@@ -21,26 +23,15 @@ if os.environ.get("GITHUB_WORKFLOW"):
         },
     }
 else:
+    # Use PostgreSQL for Docker environment
     DATABASES = {
-        "default_sqlite": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",  # NOQA:F405
-        },
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-        },
-        "default1": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("localhost"),
-            "PORT": os.environ.get("5432"),
+            "NAME": env('POSTGRES_DB', default='wms_db'),
+            "USER": env('POSTGRES_USER', default='wms_user'),
+            "PASSWORD": env('POSTGRES_PASSWORD', default='wms_password'),
+            "HOST": env('POSTGRES_HOST', default='postgres'),
+            "PORT": env('POSTGRES_PORT', default='5432'),
         },
     }
 

@@ -5,72 +5,248 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-tools"></i> Інструменти</h2>
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-tools"></i> Інструменти та утиліти
+    </h2>
   </div>
 </div>
 
-<div class="row g-4">
-  <div class="col-md-6 col-lg-4">
+<div class="row">
+  <!-- Генератор штрихкодів - доступен всем -->
+  <div class="col-md-6 col-lg-4 mb-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <i class="bi bi-download fs-1 text-primary mb-3"></i>
-        <h5 class="card-title">Експорт даних</h5>
-        <p class="card-text">Експортуйте дані товарів та операцій у різних форматах</p>
+        <div class="mb-3">
+          <i class="bi bi-upc-scan text-primary" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Генератор штрихкодів</h5>
+        <p class="card-text">Створення штрихкодів у форматі Code 128 для маркування товарів.</p>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">
+          Згенерувати штрихкод
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Довідка - доступна всем -->
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-question-circle text-info" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Довідка</h5>
+        <p class="card-text">Детальна документація по використанню системи та вирішенню проблем.</p>
+        <a href="{% url 'wms:help_main' %}" class="btn btn-outline-info">Переглянути довідку</a>
+      </div>
+    </div>
+  </div>
+
+  {% if user.role == 1 %}  <!-- Только для менеджеров (ROLE_CHOICES.MANAGER = 1) -->
+  <!-- Експорт товарів - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-download text-success" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Експорт товарів</h5>
+        <p class="card-text">Вивантаження даних про товари в файли CSV або Excel для збереження або передачі.</p>
         <div class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             Експортувати
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'wms:export_products_excel' %}">Excel</a></li>
-            <li><a class="dropdown-item" href="{% url 'wms:export_products_csv' %}">CSV</a></li>
+            <li><a class="dropdown-item" href="{% url 'wms:export_products_csv' %}">
+              <i class="bi bi-file-earmark-text"></i> CSV формат
+            </a></li>
+            <li><a class="dropdown-item" href="{% url 'wms:export_products_excel' %}">
+              <i class="bi bi-file-earmark-excel"></i> Excel формат
+            </a></li>
           </ul>
         </div>
       </div>
     </div>
   </div>
-  
-  <div class="col-md-6 col-lg-4">
+
+  <!-- Імпорт товарів - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <i class="bi bi-upload fs-1 text-success mb-3"></i>
-        <h5 class="card-title">Імпорт даних</h5>
-        <p class="card-text">Імпортуйте товари з Excel або CSV файлів</p>
-        <a href="{% url 'wms:import_products' %}" class="btn btn-success">Імпортувати</a>
+        <div class="mb-3">
+          <i class="bi bi-upload text-warning" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Імпорт товарів</h5>
+        <p class="card-text">Масове додавання товарів з файлів CSV або Excel з попереднім переглядом.</p>
+        <a href="{% url 'wms:import_products' %}" class="btn btn-outline-warning">
+          <i class="bi bi-upload"></i> Імпортувати товари
+        </a>
       </div>
     </div>
   </div>
-  
-  <div class="col-md-6 col-lg-4">
+
+  <!-- Резервна копія товарів - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <i class="bi bi-shield-check fs-1 text-info mb-3"></i>
-        <h5 class="card-title">Резервне копіювання</h5>
-        <p class="card-text">Створення та відновлення резервних копій</p>
-        <a href="#" class="btn btn-info">Резервне копіювання</a>
+        <div class="mb-3">
+          <i class="bi bi-cloud-upload text-secondary" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Резервна копія товарів</h5>
+        <p class="card-text">Створення резервної копії тільки товарів для захисту від втрати даних.</p>
+        <div class="d-grid gap-2">
+          <a href="{% url 'wms:backup_products' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-download"></i> Створити резервну копію
+          </a>
+          <a href="{% url 'wms:restore_products' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-upload"></i> Відновити товари
+          </a>
+        </div>
       </div>
     </div>
   </div>
-  
-  <div class="col-md-6 col-lg-4">
+
+  <!-- Повна резервна копія - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <i class="bi bi-people fs-1 text-secondary mb-3"></i>
+        <div class="mb-3">
+          <i class="bi bi-cloud-arrow-up text-danger" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Повна резервна копія</h5>
+        <p class="card-text">Створення повної резервної копії всіх даних системи включаючи користувачів та операції.</p>
+        <div class="d-grid gap-2">
+          <a href="{% url 'wms:backup_all_data' %}" class="btn btn-outline-danger">
+            <i class="bi bi-download"></i> Створити повну копію
+          </a>
+          <a href="{% url 'wms:restore_all_data' %}" class="btn btn-outline-danger">
+            <i class="bi bi-upload"></i> Відновити всі дані
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Управління користувачами - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-people text-primary" style="font-size: 2.5rem;"></i>
+        </div>
         <h5 class="card-title">Управління користувачами</h5>
-        <p class="card-text">Керування користувачами та правами доступу</p>
-        <a href="#" class="btn btn-secondary">Керувати</a>
+        <p class="card-text">Додавання, редагування та видалення користувачів системи.</p>
+        <a href="/admin/accounts/customer/" class="btn btn-outline-primary" target="_blank">
+          <i class="bi bi-person-lines-fill"></i> Перейти до управління
+        </a>
       </div>
     </div>
   </div>
-  
-  <div class="col-md-6 col-lg-4">
+
+  <!-- Відправка Email - только для менеджеров -->
+  <div class="col-md-6 col-lg-4 mb-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <i class="bi bi-question-circle fs-1 text-dark mb-3"></i>
-        <h5 class="card-title">Довідка</h5>
-        <p class="card-text">Документація та довідка по системі</p>
-        <a href="#" class="btn btn-dark">Довідка</a>
+        <div class="mb-3">
+          <i class="bi bi-envelope text-info" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="card-title">Відправка Email</h5>
+        <p class="card-text">Відправка повідомлень менеджерам, працівникам або вказаним email адресам.</p>
+        <a href="{% url 'wms:send_email' %}" class="btn btn-outline-info">
+          <i class="bi bi-send"></i> Відправити Email
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Модальне вікно для генератора штрихкодів -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barcodeModalLabel">
+          <i class="bi bi-upc-scan"></i> Генератор штрихкодів
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="barcodeForm">
+          <div class="mb-3">
+            <label for="barcodeText" class="form-label">Текст для штрихкоду:</label>
+            <input type="text" class="form-control" id="barcodeText" name="text" value="{{ default_barcode }}" placeholder="Введіть текст або номер" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-upc-scan"></i> Згенерувати штрихкод
+            </button>
+          </div>
+        </form>
+        
+        <div id="barcodeResult" class="mt-3 text-center" style="display: none;">
+          <h6>Згенерований штрихкод:</h6>
+          <div id="barcodeImage" class="mb-3"></div>
+          <button type="button" class="btn btn-success btn-sm" id="downloadBarcode">
+            <i class="bi bi-download"></i> Зберегти зображення
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+document.getElementById('barcodeForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const text = document.getElementById('barcodeText').value;
+  if (!text) return;
+  
+  // Показуємо індикатор завантаження
+  const resultDiv = document.getElementById('barcodeResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Завантаження...</span></div>';
+  
+  // Відправляємо запит на сервер
+  fetch('{% url "wms:barcode_generator" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({text: text})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      resultDiv.innerHTML = `
+        <h6>Згенерований штрихкод:</h6>
+        <div class="mb-3">
+          <img src="${data.barcode_url}" alt="Штрихкод" class="img-fluid border">
+        </div>
+        <button type="button" class="btn btn-success btn-sm" onclick="downloadImage('${data.barcode_url}', 'barcode_${text}.png')">
+          <i class="bi bi-download"></i> Зберегти зображення
+        </button>
+      `;
+    } else {
+      resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${data.error}</div>`;
+    }
+  })
+  .catch(error => {
+    resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${error}</div>`;
+  });
+});
+
+function downloadImage(url, filename) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+
+{% csrf_token %}
 {% endblock %} 

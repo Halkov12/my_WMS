@@ -17,6 +17,9 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'wms:writeoff_list' %}">Списання</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'wms:report_list' %}">Звіти</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'wms:tools' %}">Інструменти</a></li>
+                {% if user.role == 1 %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:user_list' %}"><i class="bi bi-people"></i> Користувачі</a></li>
+                {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item d-flex align-items-center">
@@ -37,6 +40,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> Профіль</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="bi bi-key"></i> Змінити пароль</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                           <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
@@ -66,6 +70,9 @@
     <a class="nav-link text-center flex-fill" href="{% url 'wms:writeoff_list' %}"><i class="bi bi-x-octagon fs-4"></i><div class="small">Списання</div></a>
     <a class="nav-link text-center flex-fill" href="{% url 'wms:report_list' %}"><i class="bi bi-clipboard-data fs-4"></i><div class="small">Звіти</div></a>
     <a class="nav-link text-center flex-fill" href="{% url 'wms:tools' %}"><i class="bi bi-tools fs-4"></i><div class="small">Інстр.</div></a>
+    {% if user.role == 1 %}
+    <a class="nav-link text-center flex-fill" href="{% url 'accounts:user_list' %}"><i class="bi bi-people fs-4"></i><div class="small">Корист.</div></a>
+    {% endif %}
   </div>
 </nav>
 

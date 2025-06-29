@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Профіль {{ profile_user.get_full_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">Користувачі</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ profile_user.get_full_name }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Основная информация профиля -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+          {% if profile_user.photo %}
+            <img src="{{ profile_user.photo.url }}" alt="Фото профілю" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% else %}
+            <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+              <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+            </div>
+          {% endif %}
+          
+          <h4 class="mb-1">{{ profile_user.get_full_name }}</h4>
+          <p class="text-muted mb-2">{{ role_display }}</p>
+          
+          {% if profile_user.position %}
+            <p class="text-muted mb-1"><i class="bi bi-briefcase"></i> {{ profile_user.position }}</p>
+          {% endif %}
+          
+          {% if profile_user.department %}
+            <p class="text-muted mb-3"><i class="bi bi-building"></i> {{ profile_user.department }}</p>
+          {% endif %}
+          
+          {% if user == profile_user %}
+            <div class="d-flex justify-content-center gap-2 mb-3">
+              <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil"></i> Редагувати
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Контактная информация -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-person-lines-fill"></i> Контактна інформація</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <strong>Email:</strong><br>
+            <a href="mailto:{{ profile_user.email }}">{{ profile_user.email }}</a>
+          </div>
+          
+          {% if profile_user.phone_number %}
+            <div class="mb-2">
+              <strong>Телефон:</strong><br>
+              <a href="tel:{{ profile_user.phone_number }}">{{ profile_user.phone_number }}</a>
+            </div>
+          {% endif %}
+          
+          {% if profile_user.birth_date %}
+            <div class="mb-2">
+              <strong>Дата народження:</strong><br>
+              {{ profile_user.birth_date|date:"d.m.Y" }}
+              {% if age %}
+                ({{ age }} років)
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="col-lg-8">
+      <!-- Статистика активности -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-graph-up"></i> Статистика активності</h6>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-4 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-primary mb-1">{{ total_operations }}</h4>
+                <small class="text-muted">Всього операцій</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-success mb-1">{{ profile_user.get_total_logins_display }}</h4>
+                <small class="text-muted">Всього входів</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-info mb-1">{{ profile_user.profile_views }}</h4>
+                <small class="text-muted">Переглядів профілю</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

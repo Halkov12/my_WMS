@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Повне відновлення з резервної копії{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center fw-bold text-warning">
+          <i class="bi bi-exclamation-triangle"></i> Повне відновлення
+        </h4>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        <div class="alert alert-warning">
+          <h5><i class="bi bi-exclamation-triangle"></i> Увага!</h5>
+          <p>Повне відновлення замінить всі поточні дані в системі:</p>
+          <ul>
+            <li>Товари</li>
+            <li>Операції (прийом, видача, списання)</li>
+            <li>Користувачі</li>
+            <li>Категорії</li>
+            <li>Історія змін</li>
+          </ul>
+          <p><strong>Ця операція незворотна!</strong></p>
+        </div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_file" class="form-label">Оберіть файл повної резервної копії (JSON)</label>
+            <input type="file" name="file" class="form-control" id="id_file" accept="application/json" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-warning btn-lg" onclick="return confirm('Ви впевнені? Це замінить всі поточні дані!')">
+              <i class="bi bi-arrow-clockwise"></i> Виконати повне відновлення
+            </button>
+          </div>
+        </form>
+        <div class="text-center mt-3">
+          <a href="{% url 'wms:tools' %}" class="btn btn-link">&larr; До інструментів</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

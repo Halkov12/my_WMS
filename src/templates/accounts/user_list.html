@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Користувачі системи{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Користувачі</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-people"></i> Користувачі системи</h2>
+    <div class="d-flex gap-2">
+      <span class="badge bg-primary">{{ total_users }} користувачів</span>
+      <span class="badge bg-success">{{ active_users }} активних</span>
+    </div>
+  </div>
+
+  <div class="row">
+    {% for user in users %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            {% if user.photo %}
+              <img src="{{ user.photo.url }}" alt="Фото профілю" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+            {% else %}
+              <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                <i class="bi bi-person-fill text-white"></i>
+              </div>
+            {% endif %}
+            <div>
+              <h6 class="mb-1">{{ user.get_full_name }}</h6>
+              <small class="text-muted">{{ user.get_role_display_uk }}</small>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            {% if user.position %}
+              <p class="mb-1"><i class="bi bi-briefcase text-muted"></i> {{ user.position }}</p>
+            {% endif %}
+            {% if user.department %}
+              <p class="mb-1"><i class="bi bi-building text-muted"></i> {{ user.department }}</p>
+            {% endif %}
+            <p class="mb-1"><i class="bi bi-envelope text-muted"></i> {{ user.email }}</p>
+          </div>
+          
+          <div class="row text-center mb-3">
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <h6 class="mb-0 text-primary">{{ user.operations_count }}</h6>
+                <small class="text-muted">Операцій</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <h6 class="mb-0 text-success">{{ user.get_total_logins_display }}</h6>
+                <small class="text-muted">Входів</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">
+              {% if user.get_last_login_display %}
+                Останній вхід: {{ user.get_last_login_display|date:"d.m.Y" }}
+              {% else %}
+                Ніколи не входив
+              {% endif %}
+            </small>
+            <a href="{% url 'accounts:user_detail' user.id %}" class="btn btn-outline-primary btn-sm px-3">
+              <i class="bi bi-eye"></i> Переглянути
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="text-center py-5">
+        <i class="bi bi-people display-4 text-muted"></i>
+        <p class="text-muted mt-3">Користувачів не знайдено.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %} 

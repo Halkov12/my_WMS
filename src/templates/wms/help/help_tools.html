@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - Інструменти{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Інструменти</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-tools"></i> Інструменти та утиліти
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-upload"></i> Імпорт товарів</h4>
+        <p><strong>Призначення:</strong> Масове додавання товарів з файлів CSV або Excel.</p>
+        <h5>Підтримувані формати:</h5>
+        <ul>
+          <li><strong>CSV</strong> — текстовий формат, розділений комами</li>
+          <li><strong>Excel</strong> — файли .xlsx та .xls</li>
+        </ul>
+        <h5>Обов'язкові колонки:</h5>
+        <ul>
+          <li><code>name</code> — назва товару</li>
+          <li><code>quantity</code> — кількість</li>
+          <li><code>purchase_price</code> — закупівельна ціна</li>
+          <li><code>sale_price</code> — продажна ціна</li>
+        </ul>
+        <h5>Додаткові колонки:</h5>
+        <ul>
+          <li><code>barcode</code> — штрихкод</li>
+          <li><code>category</code> — категорія</li>
+          <li><code>unit</code> — одиниця виміру</li>
+          <li><code>description</code> — опис</li>
+        </ul>
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Перед імпортом ви можете переглянути перші 5 рядків файлу.
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-download"></i> Експорт товарів</h4>
+        <p><strong>Призначення:</strong> Вивантаження даних про товари в файли для збереження або передачі.</p>
+        <h5>Формати експорту:</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>CSV формат:</h6>
+            <ul>
+              <li>Швидкий експорт</li>
+              <li>Малий розмір файлу</li>
+              <li>Сумісний з Excel</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Excel формат:</h6>
+            <ul>
+              <li>Зручне форматування</li>
+              <li>Підтримка кольорів</li>
+              <li>Професійний вигляд</li>
+            </ul>
+          </div>
+        </div>
+        <h5>Що експортується:</h5>
+        <ul>
+          <li>Всі товари в системі</li>
+          <li>Кількість на складі</li>
+          <li>Ціни (закупівельна та продажна)</li>
+          <li>Категорії та штрихкоди</li>
+          <li>Дата створення товару</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-cloud-upload"></i> Резервне копіювання</h4>
+        <p><strong>Призначення:</strong> Створення резервних копій даних для захисту від втрати інформації.</p>
+        <h5>Типи резервних копій:</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Резервна копія товарів:</h6>
+            <ul>
+              <li>Тільки дані про товари</li>
+              <li>Швидке створення</li>
+              <li>Малий розмір файлу</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Повна резервна копія:</h6>
+            <ul>
+              <li>Всі дані системи</li>
+              <li>Користувачі та операції</li>
+              <li>Повне відновлення</li>
+            </ul>
+          </div>
+        </div>
+        <h5>Формат файлів:</h5>
+        <ul>
+          <li><strong>JSON</strong> — текстовий формат, зручний для читання</li>
+          <li>Автоматичне іменування з датою</li>
+          <li>Можна зберегти локально</li>
+        </ul>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i> Регулярно створюйте резервні копії для захисту даних!
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-cloud-download"></i> Відновлення даних</h4>
+        <p><strong>Призначення:</strong> Відновлення даних з резервних копій у випадку втрати або пошкодження.</p>
+        <h5>Процес відновлення:</h5>
+        <ol>
+          <li>Виберіть файл резервної копії</li>
+          <li>Система перевірить формат файлу</li>
+          <li>Попередній перегляд даних</li>
+          <li>Підтвердження відновлення</li>
+          <li>Автоматичне відновлення</li>
+        </ol>
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> Відновлення перезапише поточні дані! Переконайтеся, що у вас є актуальна резервна копія.
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h4><i class="bi bi-upc-scan"></i> Генератор штрихкодів</h4>
+        <p><strong>Призначення:</strong> Створення штрихкодів для товарів у форматі Code 128.</p>
+        <h5>Як використовувати:</h5>
+        <ol>
+          <li>Введіть текст або номер</li>
+          <li>Натисніть "Згенерувати"</li>
+          <li>Штрихкод з'явиться на екрані</li>
+          <li>Можна зберегти зображення</li>
+        </ol>
+        <h5>Застосування:</h5>
+        <ul>
+          <li>Створення штрихкодів для нових товарів</li>
+          <li>Друкування етикеток</li>
+          <li>Маркування товарів</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Поради</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Регулярно створюйте резервні копії</li>
+          <li class="mb-2">✅ Перевіряйте формат файлів перед імпортом</li>
+          <li class="mb-2">✅ Зберігайте резервні копії в безпечному місці</li>
+          <li class="mb-2">✅ Використовуйте унікальні штрихкоди</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-shield-check"></i> Безпека</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">🔒 Доступ тільки для адміністраторів</li>
+          <li class="mb-2">🔒 Всі операції логуються</li>
+          <li class="mb-2">🔒 Перевірка форматів файлів</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-exclamation-triangle"></i> Важливо</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">⚠️ Відновлення перезапише дані</li>
+          <li class="mb-2">⚠️ Перевіряйте файли перед імпортом</li>
+          <li class="mb-2">⚠️ Зберігайте резервні копії</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

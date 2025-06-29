@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!file) { previewBlock.innerHTML = ''; return; }
     const formData = new FormData();
     formData.append('file', file);
-    fetch('{% url "wms:preview_import_products" %}', {
+    fetch('{% url "wms:preview_import_products_ajax" %}', {
       method: 'POST',
       headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
       body: formData

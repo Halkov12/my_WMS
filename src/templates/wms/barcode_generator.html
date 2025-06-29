@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Генератор штрихкодів{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-upc-scan"></i> Генератор штрихкодів
+    </h2>
+    <p class="lead mb-4">Створення штрихкодів у форматі Code 128 для маркування товарів.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form id="barcodeForm">
+          <div class="mb-3">
+            <label for="barcodeText" class="form-label">Текст для штрихкоду:</label>
+            <div class="input-group">
+              <input type="text" class="form-control form-control-lg" id="barcodeText" name="text" 
+                     value="{{ default_barcode }}" placeholder="Введіть текст або номер для штрихкоду" required>
+              <button class="btn btn-outline-secondary" type="button" id="generateNewCode">
+                <i class="bi bi-arrow-clockwise"></i> Новий код
+              </button>
+            </div>
+            <div class="form-text">Можна вводити цифри, літери та спеціальні символи. За замовчуванням генерується унікальний код.</div>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-upc-scan"></i> Згенерувати штрихкод
+            </button>
+          </div>
+        </form>
+        
+        <div id="barcodeResult" class="mt-4 text-center" style="display: none;">
+          <h5 class="mb-3">Згенерований штрихкод:</h5>
+          <div class="border rounded p-4 bg-light">
+            <div id="barcodeImage" class="mb-3"></div>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+              <button type="button" class="btn btn-success" id="downloadBarcode">
+                <i class="bi bi-download"></i> Зберегти зображення
+              </button>
+              <button type="button" class="btn btn-outline-secondary" onclick="printBarcode()">
+                <i class="bi bi-printer"></i> Друкувати
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-info-circle"></i> Інформація про штрихкоди</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Формат Code 128:</h6>
+            <ul>
+              <li>Підтримує всі ASCII символи</li>
+              <li>Високий рівень надійності</li>
+              <li>Швидке сканування</li>
+              <li>Компактний розмір</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Застосування:</h6>
+            <ul>
+              <li>Маркування товарів</li>
+              <li>Ідентифікація продукції</li>
+              <li>Складський облік</li>
+              <li>Логістика</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Функция для генерации нового уникального кода
+function generateNewCode() {
+  fetch('{% url "wms:barcode_generator" %}?free=1')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('barcodeText').value = data.barcode;
+    })
+    .catch(error => {
+      console.error('Помилка генерації коду:', error);
+    });
+}
+
+// Обработчик кнопки "Новий код"
+document.getElementById('generateNewCode').addEventListener('click', generateNewCode);
+
+document.getElementById('barcodeForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const text = document.getElementById('barcodeText').value;
+  if (!text) return;
+  
+  // Показуємо індикатор завантаження
+  const resultDiv = document.getElementById('barcodeResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Завантаження...</span></div>';
+  
+  // Відправляємо запит на сервер
+  fetch('{% url "wms:barcode_generator" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({text: text})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      resultDiv.innerHTML = `
+        <h5 class="mb-3">Згенерований штрихкод:</h5>
+        <div class="border rounded p-4 bg-light">
+          <div class="mb-3">
+            <img src="${data.barcode_url}" alt="Штрихкод" class="img-fluid border">
+          </div>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <button type="button" class="btn btn-success" onclick="downloadImage('${data.barcode_url}', 'barcode_${text}.png')">
+              <i class="bi bi-download"></i> Зберегти зображення
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="printBarcode()">
+              <i class="bi bi-printer"></i> Друкувати
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${data.error}</div>`;
+    }
+  })
+  .catch(error => {
+    resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${error}</div>`;
+  });
+});
+
+function downloadImage(url, filename) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function printBarcode() {
+  const barcodeImage = document.querySelector('#barcodeResult img');
+  if (barcodeImage) {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Друк штрихкоду</title>
+          <style>
+            body { margin: 0; padding: 20px; text-align: center; }
+            img { max-width: 100%; height: auto; }
+          </style>
+        </head>
+        <body>
+          <img src="${barcodeImage.src}" alt="Штрихкод">
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %} 

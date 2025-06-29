@@ -1,10 +1,16 @@
 from datetime import timedelta
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
+
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -89,6 +95,18 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Кэширование
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 минут по умолчанию
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
@@ -110,3 +128,48 @@ DJOSER = {
 }
 
 LANGUAGE_CODE = "uk"
+
+JAZZMIN_SETTINGS = {
+    "site_title": "WMS Admin",
+    "site_header": "WMS — Складська система",
+    "site_brand": "WMS",
+    #"site_logo": "/static/img/logo.svg",
+    "welcome_sign": "Ласкаво просимо до WMS Admin!",
+    "copyright": "WMS",
+    "search_model": ["wms.Product", "accounts.Customer"],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["wms", "accounts"],
+    "icons": {
+        "wms.product": "bi bi-box-seam",
+        "accounts.customer": "bi bi-person",
+        "wms.category": "bi bi-tags",
+        "wms.stockoperation": "bi bi-arrow-left-right",
+        "wms.stockoperationitem": "bi bi-list-check",
+        "wms.changelog": "bi bi-clock-history",
+    },
+    "custom_links": {
+        "accounts": [{
+            "name": "На сайт",
+            "url": "/",
+            "icon": "bi bi-house-door",
+            "permissions": ["auth.view_user"]
+        }],
+    },
+    "show_ui_builder": False,
+    #"site_icon": "/static/img/favicon.ico",
+    "primary_color": "#4e54c8",
+    "secondary_color": "#8f94fb",
+    "accent": "#4e54c8",
+    "navbar": "#4e54c8",
+    "navbar_text": "#fff",
+    "footer_background": "#f8fafc",
+    "footer_text": "#888",
+    "actions_sticky_top": True,
+    "related_modal_active": True,
+    "language_chooser": False,
+    "custom_css": None,
+    "custom_js": None,
+}

@@ -4,22 +4,228 @@
 
 {% block content %}
 <style>
-  .welcome-container {
-    min-height: 70vh;
+  .hero-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    border-radius: 15px;
-    padding: 3rem 2rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    max-width: 700px;
-    text-align: center;
-    animation: fadeInUp 1s ease forwards;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
   }
 
-  @keyframes fadeInUp {
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: white;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideInDown 1s ease-out;
+  }
+
+  .hero-subtitle {
+    font-size: 1.4rem;
+    margin-bottom: 3rem;
+    opacity: 0.9;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    animation: slideInUp 1s ease-out 0.3s both;
+  }
+
+  .hero-buttons {
+    animation: slideInUp 1s ease-out 0.6s both;
+  }
+
+  .btn-hero {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  .btn-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+
+  .btn-primary {
+    background: linear-gradient(45deg, #5a67d8, #4c51bf);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(45deg, #4c51bf, #434190);
+  }
+
+  .btn-outline-light {
+    color: white;
+    border: 2px solid white;
+    background: transparent;
+  }
+
+  .btn-outline-light:hover {
+    background: white;
+    color: #5a67d8;
+  }
+
+  .features-section {
+    padding: 5rem 0;
+    background: #f8fafc;
+  }
+
+  .feature-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    border: none;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  .feature-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: white;
+  }
+
+  .feature-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #2d3748;
+  }
+
+  .feature-text {
+    color: #718096;
+    line-height: 1.6;
+  }
+
+  /* Поддержка темной темы */
+  .theme-dark .features-section {
+    background: #1a1d1e !important;
+  }
+
+  .theme-dark .feature-card {
+    background: #2d3748 !important;
+    color: #f1f1f1 !important;
+  }
+
+  .theme-dark .feature-title {
+    color: #f1f1f1 !important;
+  }
+
+  .theme-dark .feature-text {
+    color: #a0aec0 !important;
+  }
+
+  .theme-dark .display-4 {
+    color: #f1f1f1 !important;
+  }
+
+  .theme-dark .lead.text-muted {
+    color: #a0aec0 !important;
+  }
+
+  .stats-section {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: white;
+    padding: 4rem 0;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #5a67d8;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+
+  .floating-shapes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .shape {
+    position: absolute;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .shape:nth-child(1) {
+    width: 80px;
+    height: 80px;
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+  }
+
+  .shape:nth-child(2) {
+    width: 120px;
+    height: 120px;
+    top: 60%;
+    right: 10%;
+    animation-delay: 2s;
+  }
+
+  .shape:nth-child(3) {
+    width: 60px;
+    height: 60px;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 4s;
+  }
+
+  @keyframes slideInDown {
     from {
       opacity: 0;
-      transform: translateY(30px);
+      transform: translateY(-50px);
     }
     to {
       opacity: 1;
@@ -27,52 +233,193 @@
     }
   }
 
-  .welcome-container h1 {
-    font-weight: 700;
-    font-size: 2.8rem;
-    margin-bottom: 1.5rem;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .welcome-container p {
-    font-size: 1.25rem;
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+    }
+  }
+
+  .welcome-message {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
     margin-bottom: 3rem;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
   }
 
-  .btn-primary {
-    background: #5a67d8;
-    border: none;
-    transition: background 0.3s ease;
-  }
-  .btn-primary:hover {
-    background: #434190;
-  }
-
-  .btn-outline-primary {
-    color: #fff;
-    border-color: #fff;
-    transition: all 0.3s ease;
-  }
-  .btn-outline-primary:hover {
-    background: #fff;
-    color: #5a67d8;
-    border-color: #fff;
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
   }
 </style>
 
-<div class="d-flex justify-content-center align-items-center">
-  <div class="welcome-container">
-    <h1>Ласкаво просимо до системи управління складом!</h1>
-    <p>Будь ласка, увійдіть або зареєструйтесь, щоб почати роботу.</p>
-    <div class="d-flex gap-3 justify-content-center">
-      <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg px-4">
-        Вхід
-      </a>
-      <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg px-4">
-        Реєстрація
-      </a>
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+  
+  <div class="container">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <i class="bi bi-box-seam"></i> WMS Система
+      </h1>
+      <p class="hero-subtitle">Сучасна система управління складом для вашого бізнесу</p>
+      
+      {% if user.is_authenticated %}
+        <div class="welcome-message">
+          <div class="user-avatar">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          <h3>Вітаємо, {{ user.get_full_name|default:user.email }}!</h3>
+          <p>Готові почати роботу з системою управління складом?</p>
+        </div>
+        <div class="hero-buttons">
+          <a href="{% url 'wms:dashboard' %}" class="btn btn-hero btn-primary">
+            <i class="bi bi-play-circle"></i> Почати роботу
+          </a>
+        </div>
+      {% else %}
+        <div class="hero-buttons">
+          <a href="{% url 'accounts:login' %}" class="btn btn-hero btn-primary me-3">
+            <i class="bi bi-box-arrow-in-right"></i> Вхід
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-hero btn-outline-light">
+            <i class="bi bi-person-plus"></i> Реєстрація
+          </a>
+        </div>
+      {% endif %}
     </div>
   </div>
-</div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <div class="row text-center mb-5">
+      <div class="col-12">
+        <h2 class="display-4 fw-bold mb-3">Можливості системи</h2>
+        <p class="lead text-muted">Все необхідне для ефективного управління складом</p>
+      </div>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h3 class="feature-title">Управління товарами</h3>
+          <p class="feature-text">Додавання, редагування та відстеження товарів з детальною інформацією та зображеннями</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-arrow-left-right"></i>
+          </div>
+          <h3 class="feature-title">Складські операції</h3>
+          <p class="feature-text">Прийом, видача та списання товарів з автоматичним оновленням залишків</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-graph-up"></i>
+          </div>
+          <h3 class="feature-title">Звіти та аналітика</h3>
+          <p class="feature-text">Детальні звіти по товарах, операціях та змінах у системі</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-tools"></i>
+          </div>
+          <h3 class="feature-title">Інструменти</h3>
+          <p class="feature-text">Імпорт/експорт даних, резервне копіювання та генератор штрихкодів</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h3 class="feature-title">Безпека</h3>
+          <p class="feature-text">Рольова система доступу та журнал змін для відстеження дій</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <h3 class="feature-title">Команда</h3>
+          <p class="feature-text">Управління користувачами з різними ролями та правами доступу</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Надійність</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Доступність</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Рівні доступу</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">∞</div>
+          <div class="stat-label">Можливості</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}

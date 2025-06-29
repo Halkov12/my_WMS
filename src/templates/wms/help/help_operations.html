@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - Операції{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Операції</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left-right"></i> Складські операції
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-box-arrow-in-down"></i> Прийом товарів</h4>
+        <p><strong>Призначення:</strong> Прийняття товарів на склад від постачальників або повернення товарів.</p>
+        <h5>Як виконати прийом:</h5>
+        <ol>
+          <li>Перейдіть до розділу "Прийом"</li>
+          <li>Додайте існуючі товари або створіть нові</li>
+          <li>Вкажіть кількість для кожного товару</li>
+          <li>Заповніть причину прийому (наприклад, "Поставка від постачальника")</li>
+          <li>Додайте примітку, якщо потрібно</li>
+          <li>Підтвердіть операцію</li>
+        </ol>
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> При прийомі кількість товарів на складі збільшується.
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-box-arrow-up"></i> Видача товарів</h4>
+        <p><strong>Призначення:</strong> Видача товарів зі складу клієнтам або для внутрішнього використання.</p>
+        <h5>Як виконати видачу:</h5>
+        <ol>
+          <li>Перейдіть до розділу "Видача"</li>
+          <li>Виберіть товари зі списку</li>
+          <li>Вкажіть кількість для видачі</li>
+          <li>Заповніть причину видачі (наприклад, "Продаж клієнту")</li>
+          <li>Додайте примітку, якщо потрібно</li>
+          <li>Підтвердіть операцію</li>
+        </ol>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i> При видачі кількість товарів на складі зменшується. Перевірте наявність!
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-x-octagon"></i> Списання товарів</h4>
+        <p><strong>Призначення:</strong> Списання товарів через псування, втрату, закінчення терміну придатності.</p>
+        <h5>Як виконати списання:</h5>
+        <ol>
+          <li>Перейдіть до розділу "Списання"</li>
+          <li>Виберіть товари для списання</li>
+          <li>Вкажіть кількість для списання</li>
+          <li>Обов'язково вкажіть причину списання</li>
+          <li>Додайте детальну примітку</li>
+          <li>Підтвердіть операцію</li>
+        </ol>
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> Списання незворотне! Товари будуть видалені зі складу.
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h4><i class="bi bi-clock-history"></i> Історія операцій</h4>
+        <p>Всі операції автоматично записуються в історію:</p>
+        <ul>
+          <li>Дата та час операції</li>
+          <li>Тип операції (прийом/видача/списання)</li>
+          <li>Товари та кількості</li>
+          <li>Користувач, який виконав операцію</li>
+          <li>Причина та примітки</li>
+        </ul>
+        <p>Історію можна переглянути в розділі "Звіти" → "Звіт по операціях".</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Поради</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Завжди вказуйте причину операції</li>
+          <li class="mb-2">✅ Перевіряйте кількість перед видачею</li>
+          <li class="mb-2">✅ Використовуйте примітки для деталей</li>
+          <li class="mb-2">✅ Регулярно перевіряйте історію</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-shield-check"></i> Безпека</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">🔒 Операції вимагають авторизації</li>
+          <li class="mb-2">🔒 Всі дії записуються в лог</li>
+          <li class="mb-2">🔒 Не можна видалити операції</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-exclamation-triangle"></i> Важливо</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">⚠️ Перевіряйте наявність перед видачею</li>
+          <li class="mb-2">⚠️ Списання незворотне</li>
+          <li class="mb-2">⚠️ Всі операції відстежуються</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
