@@ -29,8 +29,22 @@ class UNIT_CHOICES(models.IntegerChoices):
 class Product(BaseModel):
     name = models.CharField("Назва товару", max_length=255)
     barcode = models.CharField("Штрихкод", max_length=100, blank=True, unique=True)
-    purchase_price = MoneyField("Закупівельна ціна", max_digits=10, decimal_places=2, null=True, blank=True, default_currency="UAH")
-    selling_price = MoneyField("Ціна продажу", max_digits=10, decimal_places=2, null=True, blank=True, default_currency="UAH")
+    purchase_price = MoneyField(
+        "Закупівельна ціна",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default_currency="UAH",
+    )
+    selling_price = MoneyField(
+        "Ціна продажу",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default_currency="UAH",
+    )
     unit = models.SmallIntegerField("Одиниця виміру", choices=UNIT_CHOICES, default=UNIT_CHOICES.PIECES)
     quantity = models.DecimalField("Кількість", max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField("Активний", default=True)
@@ -39,7 +53,7 @@ class Product(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Категорія"
+        verbose_name="Категорія",
     )
     photo = models.ImageField(upload_to="img/products/", null=True, blank=True, verbose_name="Фото")
     description = models.TextField(blank=True, verbose_name="Опис")
@@ -67,8 +81,15 @@ class OPERATION_CHOICES(models.IntegerChoices):
 
 
 class StockOperation(BaseModel):
-    operation_type = models.SmallIntegerField("Тип операції", choices=OPERATION_CHOICES, default=OPERATION_CHOICES.RECEIPT)
-    created_by = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, verbose_name="Користувач")
+    operation_type = models.SmallIntegerField(
+        "Тип операції", choices=OPERATION_CHOICES, default=OPERATION_CHOICES.RECEIPT
+    )
+    created_by = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Користувач",
+    )
     reason = models.CharField("Причина", max_length=255, blank=True)
     note = models.TextField("Примітка", blank=True)
 
@@ -81,7 +102,12 @@ class StockOperation(BaseModel):
 
 
 class StockOperationItem(models.Model):
-    operation = models.ForeignKey("wms.StockOperation", related_name="items", on_delete=models.CASCADE, verbose_name="Операція")
+    operation = models.ForeignKey(
+        "wms.StockOperation",
+        related_name="items",
+        on_delete=models.CASCADE,
+        verbose_name="Операція",
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
     quantity = models.DecimalField("Кількість", max_digits=10, decimal_places=2)
 
@@ -94,9 +120,20 @@ class StockOperationItem(models.Model):
 
 
 class ChangeLog(BaseModel):
-    user = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, verbose_name="Користувач")
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Користувач",
+    )
     action = models.CharField("Дія", max_length=255)
-    product = models.ForeignKey("wms.Product", null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Товар")
+    product = models.ForeignKey(
+        "wms.Product",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Товар",
+    )
     details = models.JSONField("Деталі", null=True, blank=True)
 
     class Meta:

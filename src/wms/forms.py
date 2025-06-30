@@ -30,7 +30,11 @@ class StockOperationItemForm(forms.ModelForm):
 
 
 StockOperationItemFormSet = inlineformset_factory(
-    StockOperation, StockOperationItem, form=StockOperationItemForm, extra=1, can_delete=True
+    StockOperation,
+    StockOperationItem,
+    form=StockOperationItemForm,
+    extra=1,
+    can_delete=True,
 )
 
 
@@ -86,7 +90,11 @@ class AddProductForm(forms.Form):
         queryset=Product.objects.all(),
         label="Товар",
         widget=forms.Select(
-            attrs={"class": "form-select", "hx-get": "/products/search/", "hx-target": "#product-results"}
+            attrs={
+                "class": "form-select",
+                "hx-get": "/products/search/",
+                "hx-target": "#product-results",
+            }
         ),
     )
     quantity = forms.DecimalField(

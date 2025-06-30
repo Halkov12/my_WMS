@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+
 import environ
 from celery.schedules import crontab
 
@@ -8,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / '.env')
+environ.Env.read_env(BASE_DIR / ".env")
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -100,13 +101,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Кэширование
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 минут по умолчанию
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
-        }
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+        "TIMEOUT": 300,  # 5 минут по умолчанию
+        "OPTIONS": {
+            "MAX_ENTRIES": 1000,
+        },
     }
 }
 
@@ -136,7 +137,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "WMS Admin",
     "site_header": "WMS — Складська система",
     "site_brand": "WMS",
-    #"site_logo": "/static/img/logo.svg",
+    # "site_logo": "/static/img/logo.svg",
     "welcome_sign": "Ласкаво просимо до WMS Admin!",
     "copyright": "WMS",
     "search_model": ["wms.Product", "accounts.Customer"],
@@ -154,15 +155,17 @@ JAZZMIN_SETTINGS = {
         "wms.changelog": "bi bi-clock-history",
     },
     "custom_links": {
-        "accounts": [{
-            "name": "На сайт",
-            "url": "/",
-            "icon": "bi bi-house-door",
-            "permissions": ["auth.view_user"]
-        }],
+        "accounts": [
+            {
+                "name": "На сайт",
+                "url": "/",
+                "icon": "bi bi-house-door",
+                "permissions": ["auth.view_user"],
+            }
+        ],
     },
     "show_ui_builder": False,
-    #"site_icon": "/static/img/favicon.ico",
+    # "site_icon": "/static/img/favicon.ico",
     "primary_color": "#4e54c8",
     "secondary_color": "#8f94fb",
     "accent": "#4e54c8",
@@ -178,25 +181,25 @@ JAZZMIN_SETTINGS = {
 }
 
 
-CELERY_BROKER_URL = 'redis://redis'
-CELERY_BROKER_BACKEND = 'redis://redis'
+CELERY_BROKER_URL = "redis://redis"
+CELERY_BROKER_BACKEND = "redis://redis"
 
-CELERY_ACCEPT_CONTENT = ['application/json', 'json']
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["application/json", "json"]
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_SERIALIZER = "json"
 
-CELERY_IMPORTS = ('wms.tasks',)
+CELERY_IMPORTS = ("wms.tasks",)
 CELERY_BEAT_SCHEDULE = {
-    'birthday-task': {
-        'task': 'wms.tasks.birthday_task',
-        'schedule': crontab(minute=0, hour=12, day_of_month=2, month_of_year=9),
+    "birthday-task": {
+        "task": "wms.tasks.birthday_task",
+        "schedule": crontab(minute=0, hour=12, day_of_month=2, month_of_year=9),
     },
-    'tuesday-noon-task': {
-        'task': 'wms.tasks.tuesday_noon_task',
-        'schedule': crontab(minute=0, hour=12, day_of_week=2),
+    "tuesday-noon-task": {
+        "task": "wms.tasks.tuesday_noon_task",
+        "schedule": crontab(minute=0, hour=12, day_of_week=2),
     },
-    'leap-friday-13-task': {
-        'task': 'wms.tasks.leap_friday_13_task',
-        'schedule': crontab(minute=13, hour='*', day_of_month=13, month_of_year='2,6,10', day_of_week=5),
+    "leap-friday-13-task": {
+        "task": "wms.tasks.leap_friday_13_task",
+        "schedule": crontab(minute=13, hour="*", day_of_month=13, month_of_year="2,6,10", day_of_week=5),
     },
 }
