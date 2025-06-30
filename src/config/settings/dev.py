@@ -1,7 +1,7 @@
 import os
 
 from config.settings.base import *  # NOQA:F403
-from django.conf import settings
+
 
 SECRET_KEY = env('SECRET_KEY', default='dev-secret-key')
 
@@ -23,7 +23,6 @@ if os.environ.get("GITHUB_WORKFLOW"):
         },
     }
 else:
-    # Use PostgreSQL for Docker environment
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",

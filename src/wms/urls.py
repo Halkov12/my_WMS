@@ -4,7 +4,7 @@ from wms.views import (ChangeLogReportView, DashboardView, IndexView,
                        IssueView, ProductCreateView, ProductListView,
                        ProductReportView, ProductUpdateView, ProductDeleteView, ReceiptView,
                        ReportListView, StockOperationReportView, WriteOffView,
-                       ToolsView, barcode_generator, export_products_excel, export_products_csv, import_products, preview_import_products, preview_import_products_ajax, backup_products, restore_products, backup_all_data, restore_all_data, HelpView, HelpProductsView, HelpOperationsView, HelpReportsView, HelpToolsView, HelpFaqView, BarcodeGeneratorView, send_email_to_managers)
+                       ToolsView, barcode_generator, export_products_excel, export_products_csv, import_products, preview_import_products, preview_import_products_ajax, backup_products, restore_products, backup_all_data, restore_all_data, HelpView, HelpProductsView, HelpOperationsView, HelpReportsView, HelpToolsView, HelpFaqView, BarcodeGeneratorView, send_email_to_managers, generate_users_view, generate_categories_view, generate_products_view, generate_operations_view)
 
 app_name = "wms"
 
@@ -41,4 +41,8 @@ urlpatterns = [
     path("help/reports/", HelpReportsView.as_view(), name="help_reports"),
     path("help/tools/", HelpToolsView.as_view(), name="help_tools"),
     path("help/faq/", HelpFaqView.as_view(), name="help_faq"),
+    path("generate-users/", generate_users_view, name="generate_users"),
+    path("generate-categories/", generate_categories_view, name="generate_categories"),
+    path("generate-products/", generate_products_view, name="generate_products"),
+    path("generate-operations/", generate_operations_view, name="generate_operations"),
 ]

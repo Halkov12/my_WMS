@@ -1,6 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
 import environ
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -92,6 +93,8 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -172,4 +175,28 @@ JAZZMIN_SETTINGS = {
     "language_chooser": False,
     "custom_css": None,
     "custom_js": None,
+}
+
+
+CELERY_BROKER_URL = 'redis://redis'
+CELERY_BROKER_BACKEND = 'redis://redis'
+
+CELERY_ACCEPT_CONTENT = ['application/json', 'json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_IMPORTS = ('wms.tasks',)
+CELERY_BEAT_SCHEDULE = {
+    'birthday-task': {
+        'task': 'wms.tasks.birthday_task',
+        'schedule': crontab(minute=0, hour=12, day_of_month=2, month_of_year=9),
+    },
+    'tuesday-noon-task': {
+        'task': 'wms.tasks.tuesday_noon_task',
+        'schedule': crontab(minute=0, hour=12, day_of_week=2),
+    },
+    'leap-friday-13-task': {
+        'task': 'wms.tasks.leap_friday_13_task',
+        'schedule': crontab(minute=13, hour='*', day_of_month=13, month_of_year='2,6,10', day_of_week=5),
+    },
 }

@@ -100,7 +100,17 @@
                   {{ op.get_operation_type_display }}
                 </span>
               </td>
-              <td>{{ op.created_by.get_full_name|default:op.created_by.username }}</td>
+              <td>
+                {% if op.created_by.get_full_name %}
+                  {{ op.created_by.get_full_name }}
+                {% elif op.created_by.username %}
+                  {{ op.created_by.username }}
+                {% elif op.created_by.email %}
+                  {{ op.created_by.email }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
               <td>{{ op.reason|default:"-" }}</td>
               <td>{{ op.note|default:"-" }}</td>
               <td>

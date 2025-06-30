@@ -16,6 +16,9 @@
             <div class="alert alert-{{ message.tags }}">{{ message }}</div>
           {% endfor %}
         {% endif %}
+        {% if success %}
+          <div class="alert alert-success">Імпорт товарів виконано успішно!</div>
+        {% endif %}
         <form method="post" enctype="multipart/form-data" id="import-form">
           {% csrf_token %}
           <div class="mb-3">
@@ -26,16 +29,19 @@
             {% endif %}
           </div>
           <div id="preview-block" class="mb-3"></div>
-          <div class="d-grid">
-            <button type="submit" class="btn btn-success btn-lg" id="import-btn" disabled><i class="bi bi-upload"></i> Імпортувати</button>
+          <form method="post" action="{% url 'wms:preview_import_products' %}" id="confirm-import-form" style="display:none;">
+            {% csrf_token %}
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-circle"></i> Підтвердити імпорт</button>
+            </div>
+          </form>
+          <div class="text-center mt-3">
+            <a href="{% url 'wms:tools' %}" class="btn btn-link">&larr; До інструментів</a>
           </div>
         </form>
         <div class="alert alert-info mt-3">
           <b>Формат CSV/Excel:</b><br>
           <code>name,barcode,quantity,unit,purchase_price,selling_price,description</code>
-        </div>
-        <div class="text-center mt-3">
-          <a href="{% url 'wms:tools' %}" class="btn btn-link">&larr; До інструментів</a>
         </div>
       </div>
     </div>
@@ -55,7 +61,10 @@ document.addEventListener('DOMContentLoaded', function() {
     formData.append('file', file);
     fetch('{% url "wms:preview_import_products_ajax" %}', {
       method: 'POST',
-      headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
       body: formData
     })
     .then(r => r.json())
@@ -63,8 +72,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (data.html) {
         previewBlock.innerHTML = '<div class="mb-2 text-success small">Попередній перегляд (перші 5 рядків):</div>' + data.html;
         importBtn.disabled = false;
+        document.getElementById('confirm-import-form').style.display = 'block';
       } else if (data.error) {
         previewBlock.innerHTML = '<div class="text-danger">' + data.error + '</div>';
+        document.getElementById('confirm-import-form').style.display = 'none';
       }
     })
     .catch(() => previewBlock.innerHTML = '<div class="text-danger">Помилка при превью</div>');

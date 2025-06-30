@@ -11,6 +11,7 @@ services:
       - ./src:/wms/src
       - ./commands:/wms/commands
       - static_content:/wms/src/static
+      - staticfiles_content:/wms/src/staticfiles
       - media_content:/wms/src/media
     env_file:
       - .env
@@ -43,6 +44,7 @@ services:
     image: nginx:1.19
     volumes:
       - static_content:/wms/src/static
+      - staticfiles_content:/wms/src/staticfiles
       - media_content:/wms/src/media
       - ./nginx:/etc/nginx/conf.d
     ports:
@@ -53,8 +55,48 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build: ./
+    container_name: celery
+    working_dir: /wms
+    command: ./commands/start_celery.sh
+    ports:
+      - "5555:5555"
+    restart: on-failure
+    volumes:
+      - ./src:/wms/src
+      - ./commands:/wms/commands
+      - static_content:/wms/src/static
+      - staticfiles_content:/wms/src/staticfiles
+      - media_content:/wms/src/media
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
 volumes:
   pg_data: { }
   pg_admin: { }
   static_content: { }
+  staticfiles_content: { }
   media_content: { }
+  redis_data: { }

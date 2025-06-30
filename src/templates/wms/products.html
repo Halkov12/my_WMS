@@ -179,9 +179,9 @@
                         {% if total_quantity or total_purchase or total_selling %}
                         <tr class="table-secondary fw-bold">
                             <td colspan="3">Разом:</td>
-                            <td>{{ total_purchase|floatformat:2|default:"—" }}</td>
-                            <td>{{ total_selling|floatformat:2|default:"—" }}</td>
-                            <td>{{ total_quantity|default:"—" }}</td>
+                            <td>{{ total_purchase|floatformat:0|default:"—" }} <span class="text-muted">грн</span></td>
+                            <td>{{ total_selling|floatformat:0|default:"—" }} <span class="text-muted">грн</span></td>
+                            <td>{{ total_quantity|floatformat:0|default:"—" }}</td>
                             <td></td>
                         </tr>
                         {% endif %}
