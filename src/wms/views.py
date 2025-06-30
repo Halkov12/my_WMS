@@ -32,6 +32,7 @@ from functools import wraps
 import pandas as pd
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
+import traceback
 
 from wms.forms import AddProductForm, ProductCreateForm, ProductForm, StockOperationForm
 from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Product,
@@ -943,7 +944,7 @@ def export_products_csv(request):
     response['Content-Disposition'] = f'attachment; filename="products_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
     
     writer = csv.writer(response)
-    writer.writerow(['Назва', 'Штрихкод', 'Категорія', 'Кількість', 'Одиниця', 'Закупівельна ціна', 'Продажна ціна', 'Опис'])
+    writer.writerow(['name', 'barcode', 'category', 'quantity', 'unit', 'purchase_price', 'sale_price', 'description'])
     
     products = Product.objects.filter(is_active=True)
     for product in products:
@@ -952,7 +953,7 @@ def export_products_csv(request):
             product.barcode or '',
             product.category.name if product.category else '',
             product.quantity,
-            product.get_unit_display(),
+            product.unit,  # сохраняем числовой код, как в импорте
             product.purchase_price.amount if product.purchase_price else '',
             product.selling_price.amount if product.selling_price else '',
             product.description or ''
@@ -995,36 +996,58 @@ class ImportProductsForm(forms.Form):
 
 @manager_required
 def import_products(request):
+    print('import_products: start')
     if request.method == 'POST':
+        print('import_products: POST')
         file = request.FILES.get('file')
         if not file:
+            print('import_products: no file')
             messages.error(request, 'Будь ласка, виберіть файл для імпорту.')
             form = ImportProductsForm()
             return render(request, 'wms/import_products.html', {'form': form})
         try:
+            print(f'import_products: file name = {file.name}')
             if file.name.endswith('.csv'):
                 df = pd.read_csv(file)
             elif file.name.endswith(('.xlsx', '.xls')):
                 df = pd.read_excel(file)
             else:
+                print('import_products: unsupported file format')
                 messages.error(request, 'Непідтримуваний формат файлу. Використовуйте CSV або Excel.')
                 form = ImportProductsForm()
                 return render(request, 'wms/import_products.html', {'form': form})
-            required_columns = ['name', 'quantity', 'purchase_price', 'sale_price']
-            missing_columns = [col for col in required_columns if col not in df.columns]
+            required_columns = ['name', 'quantity', 'purchase_price']
+            has_sale_price = 'sale_price' in df.columns
+            has_selling_price = 'selling_price' in df.columns
+            if not (has_sale_price or has_selling_price):
+                missing_columns = ['sale_price (або selling_price)']
+            else:
+                missing_columns = []
+            for col in required_columns:
+                if col not in df.columns:
+                    missing_columns.append(col)
+            print(f'import_products: missing_columns = {missing_columns}')
             if missing_columns:
                 messages.error(request, f'Відсутні обов\'язкові колонки: {", ".join(missing_columns)}')
                 form = ImportProductsForm()
                 return render(request, 'wms/import_products.html', {'form': form})
+            if has_selling_price and not has_sale_price:
+                df['sale_price'] = df['selling_price']
             request.session['import_data'] = df.to_dict('records')
             request.session['import_filename'] = file.name
+            print('import_products: success, redirect')
             return redirect('wms:preview_import_products')
         except Exception as e:
-            messages.error(request, f'Помилка при обробці файлу: {str(e)}')
+            import traceback
+            tb = traceback.format_exc()
+            print(f'import_products: exception: {e}\n{tb}')
+            messages.error(request, f'Помилка при обробці файлу: {str(e)}\n{tb}')
             form = ImportProductsForm()
             return render(request, 'wms/import_products.html', {'form': form})
     else:
+        print('import_products: GET')
         form = ImportProductsForm()
+    print('import_products: render form')
     return render(request, 'wms/import_products.html', {'form': form})
 
 @manager_required
@@ -1078,7 +1101,7 @@ def preview_import_products(request):
             del request.session['import_filename']
             
             messages.success(request, f'Імпорт завершено! Створено: {created_count}, оновлено: {updated_count}')
-            return redirect('wms:product_list')
+            return redirect('wms:import_products')
             
         except Exception as e:
             messages.error(request, f'Помилка при імпорті: {str(e)}')
@@ -1342,23 +1365,33 @@ class BarcodeGeneratorView(LoginRequiredMixin, TemplateView):
 
 @manager_required
 def preview_import_products_ajax(request):
-    """AJAX-предпросмотр файла импорта товаров (без сохранения в базу)"""
+    print('preview_import_products_ajax: start')
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        print('preview_import_products_ajax: POST + AJAX')
         file = request.FILES.get('file')
         if not file:
+            print('preview_import_products_ajax: no file')
             return JsonResponse({'error': 'Будь ласка, виберіть файл для імпорту.'})
         try:
+            print(f'preview_import_products_ajax: file name = {file.name}')
             if file.name.endswith('.csv'):
                 df = pd.read_csv(file)
             elif file.name.endswith(('.xlsx', '.xls')):
                 df = pd.read_excel(file)
             else:
+                print('preview_import_products_ajax: unsupported file format')
                 return JsonResponse({'error': 'Непідтримуваний формат файлу. Використовуйте CSV або Excel.'})
+            print(f'preview_import_products_ajax: columns = {list(df.columns)}')
             preview_data = df.head(5).to_dict('records')
             html = render_to_string('wms/import_preview_table.html', {'preview_data': preview_data})
+            print('preview_import_products_ajax: success')
             return JsonResponse({'html': html})
         except Exception as e:
-            return JsonResponse({'error': f'Помилка при обробці файлу: {str(e)}'})
+            import traceback
+            tb = traceback.format_exc()
+            print(f'preview_import_products_ajax: exception: {e}\n{tb}')
+            return JsonResponse({'error': f'Помилка при обробці файлу: {str(e)}\n{tb}'})
+    print('preview_import_products_ajax: некоректний запит')
     return JsonResponse({'error': 'Некоректний запит.'})
 
 @manager_required

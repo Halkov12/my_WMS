@@ -5,7 +5,7 @@ from config.settings.base import *  # NOQA:F403
 
 SECRET_KEY = env('SECRET_KEY')
 
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
@@ -22,7 +22,11 @@ DATABASES = {
     }
 }
 
-STATIC_ROOT = BASE_DIR / "staticfiles/"  # NOQA:F405
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = "/static/"
 
 MEDIA_ROOT = BASE_DIR / "media/"  # NOQA:F405

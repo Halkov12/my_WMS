@@ -11,6 +11,7 @@ services:
       - ./src:/wms/src
       - ./commands:/wms/commands
       - static_content:/wms/src/static
+      - staticfiles_content:/wms/src/staticfiles
       - media_content:/wms/src/media
     env_file:
       - .env
@@ -43,6 +44,7 @@ services:
     image: nginx:1.19
     volumes:
       - static_content:/wms/src/static
+      - staticfiles_content:/wms/src/staticfiles
       - media_content:/wms/src/media
       - ./nginx:/etc/nginx/conf.d
     ports:
@@ -57,4 +59,5 @@ volumes:
   pg_data: { }
   pg_admin: { }
   static_content: { }
+  staticfiles_content: { }
   media_content: { }
