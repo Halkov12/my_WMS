@@ -2,10 +2,10 @@ from datetime import timedelta
 from pathlib import Path
 import environ
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Initialize environment variables
+
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
@@ -97,12 +97,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Кэширование
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 минут по умолчанию
+        'TIMEOUT': 300,
         'OPTIONS': {
             'MAX_ENTRIES': 1000,
         }
@@ -135,7 +135,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "WMS Admin",
     "site_header": "WMS — Складська система",
     "site_brand": "WMS",
-    #"site_logo": "/static/img/logo.svg",
+
     "welcome_sign": "Ласкаво просимо до WMS Admin!",
     "copyright": "WMS",
     "search_model": ["wms.Product", "accounts.Customer"],
@@ -161,7 +161,7 @@ JAZZMIN_SETTINGS = {
         }],
     },
     "show_ui_builder": False,
-    #"site_icon": "/static/img/favicon.ico",
+
     "primary_color": "#4e54c8",
     "secondary_color": "#8f94fb",
     "accent": "#4e54c8",

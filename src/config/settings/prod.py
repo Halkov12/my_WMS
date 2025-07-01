@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from config.settings.base import *  # NOQA:F403
+from config.settings.base import *
 
 SECRET_KEY = env('SECRET_KEY')
 
@@ -29,14 +29,14 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL = "/static/"
 
-MEDIA_ROOT = BASE_DIR / "media/"  # NOQA:F405
+MEDIA_ROOT = BASE_DIR / "media/"
 MEDIA_URL = "/media/"
 
-# Полный URL для медиа файлов в продакшене
+
 if not DEBUG:
     MEDIA_URL = "http://localhost/media/"
 
-# Простое логирование только в консоль
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

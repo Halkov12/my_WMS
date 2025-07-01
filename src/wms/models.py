@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import models  # NOQA:F401
+from django.db import models
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 from djmoney.models.fields import MoneyField

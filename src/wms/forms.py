@@ -77,7 +77,7 @@ class ProductCreateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        # Можно добавити дополнительні перевірки
+
         return cleaned_data
 
 

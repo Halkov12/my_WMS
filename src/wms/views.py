@@ -49,7 +49,6 @@ class IndexView(TemplateView):
     template_name = "index.html"
 
 
-# Миксин для проверки роли
 class RoleRequiredMixin:
     allowed_roles = []
     def dispatch(self, request, *args, **kwargs):
@@ -58,7 +57,6 @@ class RoleRequiredMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-# Дашборд и отчёты — только для MANAGER
 @method_decorator(login_required, name='dispatch')
 class DashboardView(RoleRequiredMixin, TemplateView):
     allowed_roles = [ROLE_CHOICES.MANAGER]
@@ -68,18 +66,12 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         today = datetime.today().date()
         last_7_days = [today - timedelta(days=i) for i in reversed(range(7))]
-
-        # Используем утилиты с кэшированием
         products_stats = get_products_stats()
         context["active_products_count"] = products_stats["count"] or 0
         context["total_quantity"] = products_stats["total_quantity"] or 0
         context["total_products_count"] = products_stats["count"] or 0
         context["total_stock_value"] = float(products_stats["total_value"] or 0)
-
-        # Используем утилиты для категорий
         context["categories_data"] = get_categories_with_stats().values("name", "active_products", "total_quantity")
-
-        # Данные для графика "Остатки по категориям"
         category_stock_data = (
             Category.objects.annotate(
                 total_quantity=Sum("product__quantity", filter=Q(product__is_active=True))
@@ -88,48 +80,36 @@ class DashboardView(RoleRequiredMixin, TemplateView):
             .values("name", "total_quantity")
             .order_by("-total_quantity")
         )
-        
         context["category_chart_labels"] = json.dumps([cat["name"] for cat in category_stock_data])
         context["category_chart_data"] = json.dumps([float(cat["total_quantity"]) for cat in category_stock_data])
-
-        # Данные для графика "ТОП-5 товаров по количеству"
         top_products_by_quantity = (
             Product.objects.filter(is_active=True, quantity__gt=0)
             .order_by("-quantity")
             .values("name", "quantity")[:5]
         )
-        
         context["top_products_labels"] = json.dumps([prod["name"] for prod in top_products_by_quantity])
         context["top_products_data"] = json.dumps([float(prod["quantity"]) for prod in top_products_by_quantity])
-
-        # Оптимизация: один запрос для операций с группировкой
         operations_by_day = (
             StockOperation.objects.filter(created_at__date__gte=last_7_days[0])
             .annotate(day=TruncDate("created_at"))
             .values("day", "operation_type")
             .annotate(count=Count("id"))
         )
-
         daily_counts = {
             int(OPERATION_CHOICES.RECEIPT): defaultdict(int),
             int(OPERATION_CHOICES.ISSUE): defaultdict(int),
             int(OPERATION_CHOICES.WRITE_OFF): defaultdict(int),
         }
-
         for entry in operations_by_day:
             daily_counts[entry["operation_type"]][entry["day"]] = entry["count"]
-
         date_labels = [day.strftime("%d-%m") for day in last_7_days]
         receipt_data = [daily_counts[OPERATION_CHOICES.RECEIPT][day] for day in last_7_days]
         issue_data = [daily_counts[OPERATION_CHOICES.ISSUE][day] for day in last_7_days]
         write_off_data = [daily_counts[OPERATION_CHOICES.WRITE_OFF][day] for day in last_7_days]
-
         context["date_labels"] = json.dumps(date_labels)
         context["receipt_data"] = json.dumps(receipt_data)
         context["issue_data"] = json.dumps(issue_data)
         context["write_off_data"] = json.dumps(write_off_data)
-
-        # Используем утилиты для последних операций
         recent_ops = get_recent_operations(10)
         context['recent_operations'] = [
             {
@@ -140,14 +120,10 @@ class DashboardView(RoleRequiredMixin, TemplateView):
             }
             for op in recent_ops
         ]
-
-        # Используем утилиты для товаров с низким остатком
         context['low_stock_products'] = get_low_stock_products(10, 10)
-
         return context
 
 
-# Просмотр товаров и операций — все роли
 @method_decorator(login_required, name='dispatch')
 class ProductListView(RoleRequiredMixin, ListView):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER, ROLE_CHOICES.WORKER]
@@ -163,16 +139,10 @@ class ProductListView(RoleRequiredMixin, ListView):
         stock_status = self.request.GET.get("stock_status")
         price_range = self.request.GET.get("price_range")
         sort = self.request.GET.get("sort", "name")
-
-        # Поиск по назве или штрихкоду
         if query:
             queryset = queryset.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
-        
-        # Фильтр по категории
         if category_id:
             queryset = queryset.filter(category_id=category_id)
-        
-        # Фильтр по наличию
         if stock_status:
             if stock_status == "in_stock":
                 queryset = queryset.filter(quantity__gt=0)
@@ -180,8 +150,6 @@ class ProductListView(RoleRequiredMixin, ListView):
                 queryset = queryset.filter(quantity__lt=5, quantity__gt=0)
             elif stock_status == "out_of_stock":
                 queryset = queryset.filter(quantity=0)
-        
-        # Фильтр по ценовому диапазону
         if price_range:
             if price_range == "0-100":
                 queryset = queryset.filter(selling_price__amount__lte=100)
@@ -191,8 +159,6 @@ class ProductListView(RoleRequiredMixin, ListView):
                 queryset = queryset.filter(selling_price__amount__gt=500, selling_price__amount__lte=1000)
             elif price_range == "1000+":
                 queryset = queryset.filter(selling_price__amount__gt=1000)
-
-        # Сортировка
         if sort == "name":
             queryset = queryset.order_by("name")
         elif sort == "-name":
@@ -211,7 +177,6 @@ class ProductListView(RoleRequiredMixin, ListView):
             queryset = queryset.order_by("-created_at")
         else:
             queryset = queryset.order_by("name")
-
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -221,11 +186,7 @@ class ProductListView(RoleRequiredMixin, ListView):
         stock_status = self.request.GET.get("stock_status")
         price_range = self.request.GET.get("price_range")
         sort = self.request.GET.get("sort", "name")
-
-        # Отримуємо базовий queryset для підрахунку загальних сум
         base_queryset = Product.objects.all()
-        
-        # Застосовуємо ті ж фільтри, що й для списку товарів
         if query:
             base_queryset = base_queryset.filter(Q(name__icontains=query) | Q(barcode__icontains=query))
         if category_id:
@@ -246,20 +207,15 @@ class ProductListView(RoleRequiredMixin, ListView):
                 base_queryset = base_queryset.filter(selling_price__amount__gt=500, selling_price__amount__lte=1000)
             elif price_range == "1000+":
                 base_queryset = base_queryset.filter(selling_price__amount__gt=1000)
-
-        # Підраховуємо загальні суми для всього складу (з урахуванням фільтрів)
         total_purchase = 0
         total_selling = 0
         total_quantity = 0
-
         for p in base_queryset:
             if p.purchase_price:
                 total_purchase += p.purchase_price.amount
             if p.selling_price:
                 total_selling += p.selling_price.amount
             total_quantity += p.quantity
-
-        # Получаем названия для отображения активных фильтров
         selected_category_name = ""
         if category_id:
             try:
@@ -267,7 +223,6 @@ class ProductListView(RoleRequiredMixin, ListView):
                 selected_category_name = category.name
             except Category.DoesNotExist:
                 pass
-
         stock_status_display = ""
         if stock_status == "in_stock":
             stock_status_display = "В наявності"
@@ -275,7 +230,6 @@ class ProductListView(RoleRequiredMixin, ListView):
             stock_status_display = "Низький залишок"
         elif stock_status == "out_of_stock":
             stock_status_display = "Немає в наявності"
-
         price_range_display = ""
         if price_range == "0-100":
             price_range_display = "До 100 грн"
@@ -285,7 +239,6 @@ class ProductListView(RoleRequiredMixin, ListView):
             price_range_display = "500-1000 грн"
         elif price_range == "1000+":
             price_range_display = "Більше 1000 грн"
-
         context.update(
             {
                 "query": query,
@@ -305,7 +258,6 @@ class ProductListView(RoleRequiredMixin, ListView):
         return context
 
 
-# Приёмка, создание/редактирование товаров — только MANAGER
 @method_decorator(login_required, name='dispatch')
 class ReceiptView(RoleRequiredMixin, View):
     allowed_roles = [ROLE_CHOICES.MANAGER]
@@ -314,11 +266,9 @@ class ReceiptView(RoleRequiredMixin, View):
     def get(self, request):
         if "receipt_cart" not in request.session:
             request.session["receipt_cart"] = []
-
         receipt_cart = request.session["receipt_cart"]
         add_form = AddProductForm()
         create_form = ProductCreateForm()
-
         products_in_cart = []
         for item in receipt_cart:
             try:
@@ -327,12 +277,10 @@ class ReceiptView(RoleRequiredMixin, View):
                 products_in_cart.append({"product": product, "quantity": quantity})
             except Product.DoesNotExist:
                 continue
-
         search_query = request.GET.get("search", "")
         products = Product.objects.all()
         if search_query:
             products = products.filter(Q(name__icontains=search_query) | Q(barcode__icontains=search_query))
-
         context = {
             "products_in_cart": products_in_cart,
             "add_product_form": add_form,
@@ -344,15 +292,12 @@ class ReceiptView(RoleRequiredMixin, View):
 
     def post(self, request):
         receipt_cart = request.session.get("receipt_cart", [])
-
         if "add_product" in request.POST:
             product_id = request.POST.get("product_id")
             quantity_str = request.POST.get("quantity", "0")
-
             if not product_id:
                 messages.error(request, "Будь ласка, оберіть товар зі списку.")
                 return redirect("wms:receipt_list")
-
             try:
                 product = Product.objects.get(id=product_id)
                 quantity = Decimal(quantity_str)
@@ -361,29 +306,24 @@ class ReceiptView(RoleRequiredMixin, View):
             except (Product.DoesNotExist, InvalidOperation):
                 messages.error(request, "Невірна кількість або товар.")
                 return redirect("wms:receipt_list")
-
             for item in receipt_cart:
                 if item["product_id"] == product.id:
                     item["quantity"] = str(Decimal(item["quantity"]) + quantity)
                     break
             else:
                 receipt_cart.append({"product_id": product.id, "quantity": str(quantity)})
-
             request.session["receipt_cart"] = receipt_cart
             messages.success(request, f"Товар '{product.name}' додано.")
             return redirect("wms:receipt_list")
-
         elif "create_product" in request.POST:
             form = ProductCreateForm(request.POST)
             if form.is_valid():
                 form.save()
                 return redirect("wms:receipt_list")
-
         elif "clear_cart" in request.POST:
             request.session["receipt_cart"] = []
             messages.info(request, "Список очищено.")
             return redirect("wms:receipt_list")
-
         elif "save_receipt" in request.POST:
             if receipt_cart:
                 with transaction.atomic():
@@ -398,18 +338,15 @@ class ReceiptView(RoleRequiredMixin, View):
                         StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
                         product.quantity += quantity
                         product.save()
-
                 request.session["receipt_cart"] = []
                 messages.success(request, "Прийом товарів збережено.")
                 return redirect("wms:receipt_list")
             else:
                 messages.warning(request, "Список порожній.")
                 return redirect("wms:receipt_list")
-
         return self.get(request)
 
 
-# Приёмка, создание/редактирование товаров — только MANAGER
 @method_decorator(login_required, name='dispatch')
 class ProductCreateView(RoleRequiredMixin, CreateView):
     allowed_roles = [ROLE_CHOICES.MANAGER]
@@ -419,7 +356,6 @@ class ProductCreateView(RoleRequiredMixin, CreateView):
     success_url = reverse_lazy("wms:receipt_list")
 
 
-# Отчёты — только для MANAGER
 @method_decorator(login_required, name='dispatch')
 class ReportListView(RoleRequiredMixin, TemplateView):
     allowed_roles = [ROLE_CHOICES.MANAGER]
@@ -447,12 +383,10 @@ class ProductReportView(RoleRequiredMixin, ListView):
         queryset = super().get_queryset().order_by("-created_at")
         date_from = self.request.GET.get("date_from")
         date_to = self.request.GET.get("date_to")
-
         if date_from:
             queryset = queryset.filter(created_at__gte=date_from)
         if date_to:
             queryset = queryset.filter(created_at__lte=date_to)
-
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -464,7 +398,6 @@ class ProductReportView(RoleRequiredMixin, ListView):
     def render_to_response(self, context, **response_kwargs):
         export = self.request.GET.get("export")
         queryset = self.get_queryset()
-
         if export == "excel":
             return self.export_to_excel(queryset)
         elif export == "pdf":
@@ -475,9 +408,7 @@ class ProductReportView(RoleRequiredMixin, ListView):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Products"
-
         ws.append(["Назва", "Категорія", "Ціна", "Кількість", "Дата створення"])
-
         for p in queryset:
             ws.append(
                 [
@@ -488,7 +419,6 @@ class ProductReportView(RoleRequiredMixin, ListView):
                     p.created_at.strftime("%Y-%m-%d") if p.created_at else "",
                 ]
             )
-
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         response["Content-Disposition"] = "attachment; filename=products_report.xlsx"
         wb.save(response)
@@ -497,7 +427,6 @@ class ProductReportView(RoleRequiredMixin, ListView):
     def export_to_pdf(self, queryset):
         response = HttpResponse(content_type="application/pdf")
         response["Content-Disposition"] = "attachment; filename=products_report.pdf"
-
         p = canvas.Canvas(response)
         p.setFont("Helvetica", 12)
         y = 800
@@ -513,7 +442,6 @@ class ProductReportView(RoleRequiredMixin, ListView):
             if y < 100:
                 p.showPage()
                 y = 800
-
         p.save()
         return response
 
@@ -532,16 +460,12 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
         date_to = self.request.GET.get("date_to")
         operation_type = self.request.GET.get("operation_type")
         sort = self.request.GET.get("sort", "-created_at")
-
-        # Фильтрация
         if date_from:
             queryset = queryset.filter(created_at__gte=date_from)
         if date_to:
             queryset = queryset.filter(created_at__lte=date_to)
         if operation_type:
             queryset = queryset.filter(operation_type=operation_type)
-
-        # Сортировка
         if sort == "created_at":
             queryset = queryset.order_by("created_at")
         elif sort == "-created_at":
@@ -556,7 +480,6 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
             queryset = queryset.order_by("-created_by__first_name", "-created_by__last_name")
         else:
             queryset = queryset.order_by("-created_at")
-
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -571,21 +494,17 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
     def render_to_response(self, context, **response_kwargs):
         export = self.request.GET.get("export")
         queryset = self.get_queryset()
-
         if export == "excel":
             return self.export_to_excel(queryset)
         elif export == "pdf":
             return self.export_to_pdf(queryset)
-
         return super().render_to_response(context, **response_kwargs)
 
     def export_to_excel(self, queryset):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Stock Operations"
-
         ws.append(["Тип операції", "Користувач", "Причина", "Примітка", "Товари", "Дата"])
-
         for op in queryset:
             items_str = "; ".join([f"{item.product.name} ({item.quantity})" for item in op.items.all()])
             ws.append(
@@ -598,7 +517,6 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
                     op.created_at.strftime("%Y-%m-%d %H:%M"),
                 ]
             )
-
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         response["Content-Disposition"] = "attachment; filename=stock_operations_report.xlsx"
         wb.save(response)
@@ -607,13 +525,11 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
     def export_to_pdf(self, queryset):
         response = HttpResponse(content_type="application/pdf")
         response["Content-Disposition"] = "attachment; filename=stock_operations_report.pdf"
-
         p = canvas.Canvas(response)
         p.setFont("Helvetica", 12)
         y = 800
         p.drawString(50, y, "Звіт по операціях на складі")
         y -= 30
-
         for op in queryset:
             items_str = ", ".join([f"{item.product.name}({item.quantity})" for item in op.items.all()])
             line = (
@@ -625,7 +541,6 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
             if y < 100:
                 p.showPage()
                 y = 800
-
         p.save()
         return response
 
@@ -643,7 +558,6 @@ class ChangeLogReportView(RoleRequiredMixin, TemplateView):
         return context
 
 
-# Выдача и списание — MANAGER и SELLER
 @method_decorator(login_required, name='dispatch')
 class IssueView(RoleRequiredMixin, View):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
@@ -652,7 +566,6 @@ class IssueView(RoleRequiredMixin, View):
     def get(self, request):
         issue_cart = request.session.get("issue_cart", [])
         total_items = sum(Decimal(item["quantity"]) for item in issue_cart)
-
         context = {
             "issue_cart": issue_cart,
             "total_items": total_items,
@@ -662,7 +575,6 @@ class IssueView(RoleRequiredMixin, View):
 
     def post(self, request):
         issue_cart = request.session.get("issue_cart", [])
-
         if "add_product" in request.POST:
             product_id = request.POST.get("product")
             try:
@@ -670,17 +582,13 @@ class IssueView(RoleRequiredMixin, View):
             except InvalidOperation:
                 messages.error(request, "Некоректна кількість")
                 return redirect("wms:issue_list")
-
             if quantity <= 0:
                 messages.error(request, "Кількість має бути більшою за 0")
                 return redirect("wms:issue_list")
-
             product = get_object_or_404(Product, id=product_id)
-
             if product.quantity < quantity:
                 messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
                 return redirect("wms:issue_list")
-
             for item in issue_cart:
                 if item["product_id"] == int(product_id):
                     new_quantity = Decimal(item["quantity"]) + quantity
@@ -698,18 +606,15 @@ class IssueView(RoleRequiredMixin, View):
                         "unit": product.get_unit_display(),
                     }
                 )
-
             request.session["issue_cart"] = issue_cart
             messages.success(request, "Товар додано до списку видачі")
             return redirect("wms:issue_list")
-
         elif "remove_product" in request.POST:
             product_id = request.POST.get("product_id")
             issue_cart = [item for item in issue_cart if item["product_id"] != int(product_id)]
             request.session["issue_cart"] = issue_cart
             messages.success(request, "Товар видалено зі списку")
             return redirect("wms:issue_list")
-
         elif "save_issue" in request.POST:
             if issue_cart:
                 with transaction.atomic():
@@ -719,28 +624,23 @@ class IssueView(RoleRequiredMixin, View):
                         reason=request.POST.get("reason", ""),
                         note=request.POST.get("note", ""),
                     )
-
                     for item in issue_cart:
                         product = get_object_or_404(Product, id=item["product_id"])
                         quantity = Decimal(item["quantity"])
-
                         if product.quantity < quantity:
                             messages.error(
                                 request, f"Недостатньо товару на складі. Доступно: {product.quantity}"
                             )
                             return redirect("wms:issue_list")
-
                         StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
                         product.quantity -= quantity
                         product.save()
-
                 request.session["issue_cart"] = []
                 messages.success(request, "Видачу товарів збережено")
                 return redirect("wms:issue_list")
             else:
                 messages.warning(request, "Список порожній")
                 return redirect("wms:issue_list")
-
         return self.get(request)
 
 
@@ -774,7 +674,6 @@ class WriteOffView(RoleRequiredMixin, View):
     def get(self, request):
         writeoff_cart = request.session.get("writeoff_cart", [])
         total_items = sum(Decimal(item["quantity"]) for item in writeoff_cart)
-
         context = {
             "writeoff_cart": writeoff_cart,
             "total_items": total_items,
@@ -784,7 +683,6 @@ class WriteOffView(RoleRequiredMixin, View):
 
     def post(self, request):
         writeoff_cart = request.session.get("writeoff_cart", [])
-
         if "add_product" in request.POST:
             product_id = request.POST.get("product")
             try:
@@ -792,17 +690,13 @@ class WriteOffView(RoleRequiredMixin, View):
             except InvalidOperation:
                 messages.error(request, "Неверное количество")
                 return redirect("wms:writeoff_list")
-
             if quantity <= 0:
                 messages.error(request, "Кількість має бути більшою за 0")
                 return redirect("wms:writeoff_list")
-
             product = get_object_or_404(Product, id=product_id)
-
             if product.quantity < quantity:
                 messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
                 return redirect("wms:writeoff_list")
-
             for item in writeoff_cart:
                 if item["product_id"] == int(product_id):
                     new_quantity = Decimal(item["quantity"]) + quantity
@@ -820,18 +714,15 @@ class WriteOffView(RoleRequiredMixin, View):
                         "unit": product.get_unit_display(),
                     }
                 )
-
             request.session["writeoff_cart"] = writeoff_cart
             messages.success(request, "Товар додано до списку списання")
             return redirect("wms:writeoff_list")
-
         elif "remove_product" in request.POST:
             product_id = request.POST.get("product_id")
             writeoff_cart = [item for item in writeoff_cart if item["product_id"] != int(product_id)]
             request.session["writeoff_cart"] = writeoff_cart
             messages.success(request, "Товар видалено зі списку")
             return redirect("wms:writeoff_list")
-
         elif "save_writeoff" in request.POST:
             if writeoff_cart:
                 with transaction.atomic():
@@ -841,28 +732,23 @@ class WriteOffView(RoleRequiredMixin, View):
                         reason=request.POST.get("reason", ""),
                         note=request.POST.get("note", ""),
                     )
-
                     for item in writeoff_cart:
                         product = get_object_or_404(Product, id=item["product_id"])
                         quantity = Decimal(item["quantity"])
-
                         if product.quantity < quantity:
                             messages.error(
                                 request, f"Недостатньо товару на складі. Доступно: {product.quantity}"
                             )
                             return redirect("wms:writeoff_list")
-
                         StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
                         product.quantity -= quantity
                         product.save()
-
                 request.session["writeoff_cart"] = []
                 messages.success(request, "Списання товарів збережено")
                 return redirect("wms:writeoff_list")
             else:
                 messages.warning(request, "Список порожній")
                 return redirect("wms:writeoff_list")
-
         return self.get(request)
 
 
@@ -887,7 +773,7 @@ def barcode_generator(request):
     if request.method == "GET" and request.GET.get("free") == "1":
         import random
         while True:
-            code = str(random.randint(10**11, 10**12-1))  # 12-значный
+            code = str(random.randint(10**11, 10**12-1))
             if not check_barcode_exists(code):
                 return JsonResponse({"barcode": code})
     if request.method == "POST":
@@ -913,7 +799,7 @@ def barcode_generator(request):
 
 
 def manager_required(view_func):
-    """Декоратор для проверки роли менеджера"""
+    
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -925,7 +811,7 @@ def manager_required(view_func):
     return _wrapped_view
 
 def manager_required_mixin(view_class):
-    """Mixin для проверки роли менеджера в class-based views"""
+    
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login')
@@ -939,7 +825,7 @@ def manager_required_mixin(view_class):
 
 @manager_required
 def export_products_csv(request):
-    """Експорт товарів в CSV формат (тільки для менеджерів)"""
+    
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="products_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
     
@@ -953,7 +839,7 @@ def export_products_csv(request):
             product.barcode or '',
             product.category.name if product.category else '',
             product.quantity,
-            product.unit,  # сохраняем числовой код, как в импорте
+            product.unit,
             product.purchase_price.amount if product.purchase_price else '',
             product.selling_price.amount if product.selling_price else '',
             product.description or ''
@@ -963,7 +849,7 @@ def export_products_csv(request):
 
 @manager_required
 def export_products_excel(request):
-    """Експорт товарів в Excel формат (тільки для менеджерів)"""
+    
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="products_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
     
@@ -971,12 +857,12 @@ def export_products_excel(request):
     ws = wb.active
     ws.title = "Товари"
     
-    # Заголовки
+
     headers = ['Назва', 'Штрихкод', 'Категорія', 'Кількість', 'Одиниця', 'Закупівельна ціна', 'Продажна ціна', 'Опис']
     for col, header in enumerate(headers, 1):
         ws.cell(row=1, column=col, value=header)
     
-    # Дані
+
     products = Product.objects.filter(is_active=True)
     for row, product in enumerate(products, 2):
         ws.cell(row=row, column=1, value=product.name)
@@ -1052,7 +938,7 @@ def import_products(request):
 
 @manager_required
 def preview_import_products(request):
-    """Попередній перегляд імпорту товарів (тільки для менеджерів)"""
+    
     import_data = request.session.get('import_data')
     filename = request.session.get('import_filename')
     
@@ -1060,7 +946,7 @@ def preview_import_products(request):
         messages.error(request, 'Немає даних для імпорту.')
         return redirect('wms:tools')
     
-    # Показуємо перші 5 рядків
+
     preview_data = import_data[:5]
     
     if request.method == 'POST':
@@ -1073,7 +959,7 @@ def preview_import_products(request):
                 if not name:
                     continue
                 
-                # Перевіряємо чи існує товар
+
                 product, created = Product.objects.get_or_create(
                     name=name,
                     defaults={
@@ -1089,14 +975,14 @@ def preview_import_products(request):
                 if created:
                     created_count += 1
                 else:
-                    # Оновлюємо існуючий товар
+
                     product.quantity = float(row.get('quantity', 0))
                     product.purchase_price = float(row.get('purchase_price', 0))
                     product.selling_price = float(row.get('sale_price', 0))
                     product.save()
                     updated_count += 1
             
-            # Очищаємо сесію
+
             del request.session['import_data']
             del request.session['import_filename']
             
@@ -1116,7 +1002,7 @@ def preview_import_products(request):
 
 @manager_required
 def backup_products(request):
-    """Резервна копія товарів (тільки для менеджерів)"""
+    
     from django.core.serializers import serialize
     
     products = Product.objects.filter(is_active=True)
@@ -1130,7 +1016,7 @@ def backup_products(request):
 
 @manager_required
 def restore_products(request):
-    """Відновлення товарів з резервної копії (тільки для менеджерів)"""
+    
     if request.method == 'POST':
         file = request.FILES.get('backup_file')
         if not file:
@@ -1170,34 +1056,34 @@ def restore_products(request):
 
 @manager_required
 def backup_all_data(request):
-    """Повна резервна копія всіх даних (тільки для менеджерів)"""
+    
     from django.core.serializers import serialize
     from accounts.models import Customer
     
-    # Збираємо дані з усіх моделей
+
     data = []
     
-    # Користувачі
+
     users = Customer.objects.all()
     data.extend(serialize('python', users))
     
-    # Категорії
+
     categories = Category.objects.all()
     data.extend(serialize('python', categories))
     
-    # Товари
+
     products = Product.objects.all()
     data.extend(serialize('python', products))
     
-    # Операції
+
     operations = StockOperation.objects.all()
     data.extend(serialize('python', operations))
     
-    # Елементи операцій
+
     operation_items = StockOperationItem.objects.all()
     data.extend(serialize('python', operation_items))
     
-    # Зміни
+
     changes = ChangeLog.objects.all()
     data.extend(serialize('python', changes))
     
@@ -1209,7 +1095,7 @@ def backup_all_data(request):
 
 @manager_required
 def restore_all_data(request):
-    """Відновлення всіх даних з резервної копії (тільки для менеджерів)"""
+    
     if request.method == 'POST':
         file = request.FILES.get('backup_file')
         if not file:
@@ -1354,10 +1240,10 @@ class BarcodeGeneratorView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Генерируем уникальный штрих-код по умолчанию
+
         import random
         while True:
-            code = str(random.randint(10**11, 10**12-1))  # 12-значный код
+            code = str(random.randint(10**11, 10**12-1))
             if not Product.objects.filter(barcode=code).exists():
                 context['default_barcode'] = code
                 break
@@ -1396,7 +1282,7 @@ def preview_import_products_ajax(request):
 
 @manager_required
 def send_email_to_managers(request):
-    """Відправка email менеджерам, працівникам або вказаним адресам"""
+    
     if request.method == 'POST':
         recipient_type = request.POST.get('recipient_type')
         custom_email = request.POST.get('custom_email', '').strip()
@@ -1410,18 +1296,18 @@ def send_email_to_managers(request):
         recipients = []
         
         if recipient_type == 'managers':
-            # Отримуємо всіх менеджерів
+
             managers = Customer.objects.filter(role=ROLE_CHOICES.MANAGER, is_active=True)
             recipients = [manager.email for manager in managers]
         elif recipient_type == 'employees':
-            # Отримуємо всіх працівників (SELLER та WORKER)
+
             employees = Customer.objects.filter(
                 Q(role=ROLE_CHOICES.SELLER) | Q(role=ROLE_CHOICES.WORKER),
                 is_active=True
             )
             recipients = [employee.email for employee in employees]
         elif recipient_type == 'custom' and custom_email:
-            # Користувач ввів власний email
+
             recipients = [email.strip() for email in custom_email.split(',') if email.strip()]
         
         if not recipients:
@@ -1429,11 +1315,11 @@ def send_email_to_managers(request):
             return redirect('wms:tools')
         
         try:
-            # Відправляємо email
+
             send_mail(
                 subject=subject,
                 message=message,
-                from_email=None,  # Використовуємо DEFAULT_FROM_EMAIL з налаштувань
+                from_email=None,
                 recipient_list=recipients,
                 fail_silently=False,
             )
@@ -1445,7 +1331,7 @@ def send_email_to_managers(request):
         
         return redirect('wms:tools')
     
-    # GET запит - показуємо форму
+
     context = {
         'managers_count': Customer.objects.filter(role=ROLE_CHOICES.MANAGER, is_active=True).count(),
         'employees_count': Customer.objects.filter(

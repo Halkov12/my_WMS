@@ -27,7 +27,7 @@ class CustomLoginView(LoginView):
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
-            # Обновляем кастомные поля после успешного входа
+
             if hasattr(self.request.user, 'update_last_login'):
                 try:
                     self.request.user.update_last_login()
@@ -36,7 +36,7 @@ class CustomLoginView(LoginView):
                     logger.error(f"Error updating last login: {e}")
             return response
         except Exception as e:
-            # Логируем ошибку для отладки
+
             logger = logging.getLogger(__name__)
             logger.error(f"Login error: {e}")
             raise
@@ -53,13 +53,13 @@ class RegisterView(FormView):
 
     def form_valid(self, form):
         user = form.save()
-        # Автоматический логин после регистрации
+
         email = form.cleaned_data.get('email')
         password = form.cleaned_data.get('password1')
         user = authenticate(self.request, email=email, password=password)
         if user is not None:
             login(self.request, user)
-            # Обновляем статистику входа для нового пользователя
+
             if hasattr(user, 'update_last_login'):
                 try:
                     user.update_last_login()
@@ -77,25 +77,25 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        # Временно отключаем обновление статистики для отладки
-        # if hasattr(user, 'increment_profile_views'):
-        #     try:
-        #         user.increment_profile_views()
-        #     except Exception:
-        #         pass
+
+
+
+
+
+
         
-        # Статистика активности пользователя
+
         today = timezone.now().date()
         last_week = today - timedelta(days=7)
         last_month = today - timedelta(days=30)
         
-        # Операции пользователя
+
         user_operations = StockOperation.objects.filter(created_by=user)
         
-        # Безопасное получение значений
+
         role_display = user.get_role_display()
         
-        # Вычисляем длительность регистрации
+
         registration_duration = user.get_registration_duration()
         
         context.update({
@@ -146,10 +146,10 @@ class UserListView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Получаем список пользователей
+
         users = Customer.objects.filter(is_active=True).order_by('-date_joined')
         
-        # Подсчитываем статистику
+
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)
         active_users = users.filter(
@@ -174,20 +174,20 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         
         try:
             user = Customer.objects.get(id=user_id, is_active=True)
-            # Временно отключаем обновление статистики для отладки
-            # if hasattr(user, 'increment_profile_views'):
-            #     try:
-            #         user.increment_profile_views()
-            #     except Exception:
-            #         pass
+
+
+
+
+
+
             
-            # Статистика пользователя
+
             user_operations = StockOperation.objects.filter(created_by=user)
             
-            # Безопасное получение значений
+
             role_display = user.get_role_display()
             
-            # Вычисляем возраст и длительность регистрации
+
             age = user.get_age()
             registration_duration = user.get_registration_duration()
             

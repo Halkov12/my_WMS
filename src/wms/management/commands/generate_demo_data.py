@@ -31,7 +31,7 @@ class Command(BaseCommand):
     help = 'Генерує 5 категорій, 100 товарів, операції і 5 користувачів з різними ролями.'
 
     def handle(self, *args, **kwargs):
-        # Создание пользователей
+
         users = []
         for i in range(5):
             user, created = Customer.objects.get_or_create(
@@ -48,14 +48,14 @@ class Command(BaseCommand):
             users.append(user)
         self.stdout.write(self.style.SUCCESS(f'Створено користувачів: {len(users)}'))
 
-        # Создание категорий
+
         categories = []
         for name in CATEGORY_NAMES:
             cat, _ = Category.objects.get_or_create(name=name)
             categories.append(cat)
         self.stdout.write(self.style.SUCCESS(f'Створено категорій: {len(categories)}'))
 
-        # Создание товаров
+
         products = []
         for i in range(1, 101):
             cat = categories[(i-1)//20]
@@ -77,7 +77,7 @@ class Command(BaseCommand):
             products.append(prod)
         self.stdout.write(self.style.SUCCESS(f'Створено товарів: {len(products)}'))
 
-        # Операции (по 2 на товар: приход и выдача)
+
         reasons = [
             "Планове поповнення складу",
             "Повернення від клієнта",
