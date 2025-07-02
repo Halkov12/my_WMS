@@ -2,10 +2,10 @@ from datetime import timedelta
 from pathlib import Path
 import environ
 
-
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
+# Initialize environment variables
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
@@ -92,12 +92,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-
+# Кэширование
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -135,7 +133,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "WMS Admin",
     "site_header": "WMS — Складська система",
     "site_brand": "WMS",
-
+    # "site_logo": "/static/img/logo.svg",
     "welcome_sign": "Ласкаво просимо до WMS Admin!",
     "copyright": "WMS",
     "search_model": ["wms.Product", "accounts.Customer"],
@@ -161,7 +159,7 @@ JAZZMIN_SETTINGS = {
         }],
     },
     "show_ui_builder": False,
-
+    # "site_icon": "/static/img/favicon.ico",
     "primary_color": "#4e54c8",
     "secondary_color": "#8f94fb",
     "accent": "#4e54c8",
@@ -174,4 +172,28 @@ JAZZMIN_SETTINGS = {
     "language_chooser": False,
     "custom_css": None,
     "custom_js": None,
+}
+
+
+CELERY_BROKER_URL = "redis://redis"
+CELERY_BROKER_BACKEND = "redis://redis"
+
+CELERY_ACCEPT_CONTENT = ["application/json", "json"]
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_IMPORTS = ("wms.tasks",)
+CELERY_BEAT_SCHEDULE = {
+    "birthday-task": {
+        "task": "wms.tasks.birthday_task",
+        "schedule": crontab(minute=0, hour=12, day_of_month=2, month_of_year=9),
+    },
+    "tuesday-noon-task": {
+        "task": "wms.tasks.tuesday_noon_task",
+        "schedule": crontab(minute=0, hour=12, day_of_week=2),
+    },
+    "leap-friday-13-task": {
+        "task": "wms.tasks.leap_friday_13_task",
+        "schedule": crontab(minute=13, hour="*", day_of_month=13, month_of_year="2,6,10", day_of_week=5),
+    },
 }

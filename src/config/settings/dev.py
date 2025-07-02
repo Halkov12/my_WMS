@@ -1,7 +1,6 @@
 import os
 
-from config.settings.base import *
-from django.conf import settings
+from config.settings.base import env
 
 SECRET_KEY = env('SECRET_KEY', default='dev-secret-key')
 
@@ -9,7 +8,7 @@ DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-
+# MIDDLEWARE + = ['']
 
 if os.environ.get("GITHUB_WORKFLOW"):
     DATABASES = {

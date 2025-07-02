@@ -27,8 +27,7 @@ class CustomLoginView(LoginView):
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
-
-            if hasattr(self.request.user, 'update_last_login'):
+            if hasattr(self.request.user, "update_last_login"):
                 try:
                     self.request.user.update_last_login()
                 except Exception as e:
@@ -36,7 +35,6 @@ class CustomLoginView(LoginView):
                     logger.error(f"Error updating last login: {e}")
             return response
         except Exception as e:
-
             logger = logging.getLogger(__name__)
             logger.error(f"Login error: {e}")
             raise
@@ -53,14 +51,12 @@ class RegisterView(FormView):
 
     def form_valid(self, form):
         user = form.save()
-
-        email = form.cleaned_data.get('email')
-        password = form.cleaned_data.get('password1')
+        email = form.cleaned_data.get("email")
+        password = form.cleaned_data.get("password1")
         user = authenticate(self.request, email=email, password=password)
         if user is not None:
             login(self.request, user)
-
-            if hasattr(user, 'update_last_login'):
+            if hasattr(user, "update_last_login"):
                 try:
                     user.update_last_login()
                 except Exception as e:
@@ -76,26 +72,11 @@ class ProfileView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        
-
-
-
-
-
-
-        
-
         today = timezone.now().date()
         last_week = today - timedelta(days=7)
         last_month = today - timedelta(days=30)
-        
-
         user_operations = StockOperation.objects.filter(created_by=user)
-        
-
         role_display = user.get_role_display()
-        
-
         registration_duration = user.get_registration_duration()
         
         context.update({
@@ -145,10 +126,8 @@ class UserListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
 
-        users = Customer.objects.filter(is_active=True).order_by('-date_joined')
-        
+        users = Customer.objects.filter(is_active=True).order_by("-date_joined")
 
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)
@@ -174,19 +153,9 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         
         try:
             user = Customer.objects.get(id=user_id, is_active=True)
-
-
-
-
-
-
-            
-
             user_operations = StockOperation.objects.filter(created_by=user)
-            
 
             role_display = user.get_role_display()
-            
 
             age = user.get_age()
             registration_duration = user.get_registration_duration()

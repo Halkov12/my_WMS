@@ -24,5 +24,10 @@ class CustomerAdmin(admin.ModelAdmin):
             'fields': ('date_joined', 'last_login_date', 'total_logins', 'profile_views')
         }),
     )
-    
-    readonly_fields = ['date_joined', 'last_login_date', 'total_logins', 'profile_views']
+
+    readonly_fields = [
+        "date_joined",
+        "last_login_date",
+        "total_logins",
+        "profile_views",
+    ]
