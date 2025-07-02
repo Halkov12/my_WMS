@@ -11,7 +11,8 @@ from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        export_products_csv, export_products_excel,
                        import_products, preview_import_products,
                        preview_import_products_ajax, restore_all_data,
-                       restore_products, send_email_to_managers)
+                       restore_products, send_email_to_managers,
+                       InventoryReportView, MinStockReportView, InventoryCreateView)
 
 app_name = "wms"
 
@@ -27,6 +28,8 @@ urlpatterns = [
     path("reports/products/", ProductReportView.as_view(), name="product_report"),
     path("reports/stock-operations/", StockOperationReportView.as_view(), name="stock_report"),
     path("reports/change-logs/", ChangeLogReportView.as_view(), name="changelog_report"),
+    path("reports/inventory/", InventoryReportView.as_view(), name="inventory_report"),
+    path("reports/min-stock/", MinStockReportView.as_view(), name="min_stock_report"),
     path("issue/", IssueView.as_view(), name="issue_list"),
     path("writeoff/", WriteOffView.as_view(), name="writeoff_list"),
     path("tools/", ToolsView.as_view(), name="tools"),
@@ -48,4 +51,5 @@ urlpatterns = [
     path("help/reports/", HelpReportsView.as_view(), name="help_reports"),
     path("help/tools/", HelpToolsView.as_view(), name="help_tools"),
     path("help/faq/", HelpFaqView.as_view(), name="help_faq"),
+    path("tools/inventory/create/", InventoryCreateView.as_view(), name="inventory_create"),
 ]

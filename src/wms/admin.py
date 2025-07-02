@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (Category, ChangeLog, Product, StockOperation,
-                     StockOperationItem)
+                     StockOperationItem, Notification)
 
 
 @admin.register(Product)
@@ -35,3 +35,6 @@ class StockOperationItemAdmin(admin.ModelAdmin):
 class ChangeLogAdmin(admin.ModelAdmin):
     list_display = ["user", "action", "product"]
     list_filter = ["user", "action"]
+
+
+admin.site.register(Notification)

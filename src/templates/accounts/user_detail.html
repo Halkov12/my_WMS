@@ -91,7 +91,7 @@
           <div class="row text-center">
             <div class="col-md-4 mb-3">
               <div class="border rounded p-3">
-                <h4 class="text-primary mb-1">{{ total_operations }}</h4>
+                <h4 class="text-primary mb-1">{{ total_operations|default:0 }}</h4>
                 <small class="text-muted">Всього операцій</small>
               </div>
             </div>

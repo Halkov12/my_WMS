@@ -158,6 +158,19 @@
       </div>
     </div>
   </div>
+
+  <!-- Створити інвентаризацію -->
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <a href="{% url 'wms:inventory_create' %}" class="btn btn-warning d-inline-flex align-items-center gap-2">
+            <i class="bi bi-clipboard-plus"></i> Створити інвентаризацію
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
   {% endif %}
 </div>
 

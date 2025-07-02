@@ -18,6 +18,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", default="-")
     unit = serializers.CharField(source="get_unit_display")
     photo = serializers.ImageField(use_url=True)
+    description = serializers.CharField()
 
     class Meta:
         model = Product
@@ -32,6 +33,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "purchase_price",
             "selling_price",
             "created_at",
+            "description",
         ]
 
 

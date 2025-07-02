@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Звіт по товарам з мінімальним залишком{% endblock %}
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по товарам з мінімальним залишком</li>
+  </ol>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle"></i> Звіт по товарам з мінімальним залишком</h4>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Товар</th>
+              <th>Штрихкод</th>
+              <th>Категорія</th>
+              <th>Залишок</th>
+              <th>Мінімальний залишок</th>
+              <th>Одиниця</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>{{ product.name }}</td>
+              <td>{{ product.barcode }}</td>
+              <td>{{ product.category.name|default:"-" }}</td>
+              <td>{{ product.quantity }}</td>
+              <td>{{ product.min_quantity }}</td>
+              <td>{{ product.get_unit_display }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Немає товарів з мінімальним залишком.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

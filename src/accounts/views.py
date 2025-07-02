@@ -15,7 +15,7 @@ from django.views.generic import FormView, TemplateView, UpdateView
 from accounts.forms import (CustomerRegistrationForm, EmailLoginForm,
                             PasswordChangeForm, ProfileUpdateForm)
 from accounts.models import Customer
-from wms.models import StockOperation
+from wms.models import StockOperation, Notification
 
 
 class CustomLoginView(LoginView):
@@ -64,6 +64,11 @@ class RegisterView(FormView):
                     logger = logging.getLogger(__name__)
                     logger.error(f"Error updating last login after registration: {e}")
         messages.success(self.request, "Registration was successful.")
+        Notification.objects.create(
+            type=5,
+            message=f"Новий користувач: <strong>{email}</strong>",
+            user=user
+        )
         return super().form_valid(form)
 
 
@@ -131,6 +136,7 @@ class UserListView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         users = Customer.objects.filter(is_active=True).order_by("-date_joined")
+        users = users.annotate(operations_count=models.Count('stockoperation', filter=models.Q(stockoperation__isnull=False)))
 
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)

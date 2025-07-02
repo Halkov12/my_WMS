@@ -54,7 +54,7 @@
           <div class="row text-center mb-3">
             <div class="col-6">
               <div class="border rounded p-2">
-                <h6 class="mb-0 text-primary">{{ user.operations_count }}</h6>
+                <h6 class="mb-0 text-primary">{{ user.operations_count|default:0 }}</h6>
                 <small class="text-muted">Операцій</small>
               </div>
             </div>

@@ -40,7 +40,7 @@
       </div>
     </div>
   </div>
-  
+
   <div class="col-md-6 col-lg-4">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
@@ -48,6 +48,28 @@
         <h5 class="card-title">Звіт по змінах</h5>
         <p class="card-text">Історія змін в системі</p>
         <a href="{% url 'wms:changelog_report' %}" class="btn btn-info">Переглянути</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-clipboard-data fs-1 text-warning mb-3"></i>
+        <h5 class="card-title">Звіт по інвентаризації</h5>
+        <p class="card-text">Порівняння фактичних і облікових залишків, виявлення розбіжностей</p>
+        <a href="{% url 'wms:inventory_report' %}" class="btn btn-warning">Переглянути</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3"></i>
+        <h5 class="card-title">Звіт по товарам з мінімальним залишком</h5>
+        <p class="card-text">Список товарів, у яких залишок менше або дорівнює мінімальному</p>
+        <a href="{% url 'wms:min_stock_report' %}" class="btn btn-danger">Переглянути</a>
       </div>
     </div>
   </div>

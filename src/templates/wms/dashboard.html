@@ -169,6 +169,28 @@
       </div>
     </div>
   </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> Сповіщення</h5>
+        <ul class="list-unstyled mb-0">
+          {% for n in notifications %}
+          <li class="mb-2">
+            {% if n.type == 1 %}<i class="bi bi-info-circle text-primary"></i>{% endif %}
+            {% if n.type == 2 %}<i class="bi bi-arrow-down-circle text-success"></i>{% endif %}
+            {% if n.type == 3 %}<i class="bi bi-arrow-up-circle text-warning"></i>{% endif %}
+            {% if n.type == 4 %}<i class="bi bi-x-octagon text-danger"></i>{% endif %}
+            {% if n.type == 5 %}<i class="bi bi-person-check text-info"></i>{% endif %}
+            {{ n.message }}
+            <span class="text-muted small ms-2">{{ n.created_at|date:'d.m.Y H:i' }}</span>
+          </li>
+          {% empty %}
+          <li class="text-muted">Немає важливих сповіщень</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row g-4 mt-2">
