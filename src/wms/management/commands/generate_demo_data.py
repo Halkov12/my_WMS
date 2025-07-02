@@ -110,17 +110,16 @@ class Command(BaseCommand):
 
         categories = []
         for i in range(1, 6):
-            cat, _ = Category.objects.get_or_create(name=f'Категорія {i}')
+            cat, _ = Category.objects.get_or_create(name=f"Категорія {i}")
             categories.append(cat)
         self.stdout.write(self.style.SUCCESS(f"Створено категорій: {len(categories)}"))
 
         products = []
         for i in range(1, 101):
             cat = categories[(i - 1) // 20]
-            prod_name = random.choice(PRODUCT_NAMES) + f" {i}"
             barcode = str(100000000000 + i)
             prod, _ = Product.objects.get_or_create(
-                name=f'Товар {i}',
+                name=f"Товар {i}",
                 defaults={
                     "barcode": barcode,
                     "category": cat,
@@ -134,7 +133,6 @@ class Command(BaseCommand):
             )
             products.append(prod)
         self.stdout.write(self.style.SUCCESS(f"Створено товарів: {len(products)}"))
-
 
         reasons = [
             "Планове поповнення складу",
@@ -153,12 +151,6 @@ class Command(BaseCommand):
                 )
                 StockOperationItem.objects.create(operation=op, product=prod, quantity=random.randint(1, 10))
 
-
-                StockOperationItem.objects.create(
-                    operation=op,
-                    product=prod,
-                    quantity=random.randint(1, 10)
-                )
+                StockOperationItem.objects.create(operation=op, product=prod, quantity=random.randint(1, 10))
                 StockOperationItem.objects.create(operation=op, product=prod, quantity=random.randint(1, 10))
                 self.stdout.write(self.style.SUCCESS("Створено операції для товарів."))
-

@@ -1,18 +1,19 @@
+import logging
+from datetime import timedelta
+
 from django.contrib import messages
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth import authenticate, login
-from django.urls import reverse_lazy
-from django.views.generic import FormView, TemplateView, UpdateView
-from django.shortcuts import redirect, render
-from django.views import View
-from django.utils import timezone
-from datetime import timedelta
-import logging
 from django.db import models
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.generic import FormView, TemplateView, UpdateView
 
-from accounts.forms import CustomerRegistrationForm, ProfileUpdateForm, EmailLoginForm, PasswordChangeForm
+from accounts.forms import (CustomerRegistrationForm, EmailLoginForm,
+                            PasswordChangeForm, ProfileUpdateForm)
 from accounts.models import Customer
 from wms.models import StockOperation
 
@@ -78,17 +79,19 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         user_operations = StockOperation.objects.filter(created_by=user)
         role_display = user.get_role_display()
         registration_duration = user.get_registration_duration()
-        
-        context.update({
-            "user": user,
-            "total_operations": user_operations.count(),
-            "operations_this_week": user_operations.filter(created_at__date__gte=last_week).count(),
-            "operations_this_month": user_operations.filter(created_at__date__gte=last_month).count(),
-            "last_operation": user_operations.order_by('-created_at').first(),
-            "role_display": role_display,
-            "age": user.get_age(),
-            "registration_duration": registration_duration,
-        })
+
+        context.update(
+            {
+                "user": user,
+                "total_operations": user_operations.count(),
+                "operations_this_week": user_operations.filter(created_at__date__gte=last_week).count(),
+                "operations_this_month": user_operations.filter(created_at__date__gte=last_month).count(),
+                "last_operation": user_operations.order_by("-created_at").first(),
+                "role_display": role_display,
+                "age": user.get_age(),
+                "registration_duration": registration_duration,
+            }
+        )
         return context
 
 
@@ -110,15 +113,15 @@ class PasswordChangeView(LoginRequiredMixin, View):
 
     def get(self, request):
         form = PasswordChangeForm(request.user)
-        return render(request, self.template_name, {'form': form})
+        return render(request, self.template_name, {"form": form})
 
     def post(self, request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Пароль успішно змінено!")
-            return redirect('accounts:profile')
-        return render(request, self.template_name, {'form': form})
+            return redirect("accounts:profile")
+        return render(request, self.template_name, {"form": form})
 
 
 class UserListView(LoginRequiredMixin, TemplateView):
@@ -132,15 +135,16 @@ class UserListView(LoginRequiredMixin, TemplateView):
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)
         active_users = users.filter(
-            models.Q(last_login_date__date__gte=week_ago) | 
-            models.Q(last_login__date__gte=week_ago)
+            models.Q(last_login_date__date__gte=week_ago) | models.Q(last_login__date__gte=week_ago)
         ).count()
-        
-        context.update({
-            "users": users,
-            "total_users": total_users,
-            "active_users": active_users,
-        })
+
+        context.update(
+            {
+                "users": users,
+                "total_users": total_users,
+                "active_users": active_users,
+            }
+        )
         return context
 
 
@@ -149,8 +153,8 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_id = self.kwargs.get('user_id')
-        
+        user_id = self.kwargs.get("user_id")
+
         try:
             user = Customer.objects.get(id=user_id, is_active=True)
             user_operations = StockOperation.objects.filter(created_by=user)
@@ -159,17 +163,19 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
 
             age = user.get_age()
             registration_duration = user.get_registration_duration()
-            
-            context.update({
-                "profile_user": user,
-                "total_operations": user_operations.count(),
-                "recent_operations": user_operations.order_by('-created_at')[:5],
-                "role_display": role_display,
-                "age": age,
-                "registration_duration": registration_duration,
-            })
+
+            context.update(
+                {
+                    "profile_user": user,
+                    "total_operations": user_operations.count(),
+                    "recent_operations": user_operations.order_by("-created_at")[:5],
+                    "role_display": role_display,
+                    "age": age,
+                    "registration_duration": registration_duration,
+                }
+            )
         except Customer.DoesNotExist:
             messages.error(self.request, "Користувача не знайдено.")
-            return redirect('accounts:user_list')
-            
+            return redirect("accounts:user_list")
+
         return context

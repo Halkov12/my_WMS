@@ -1,10 +1,10 @@
-from django.db.models import Q, Sum, Count, F
 from django.core.cache import cache
-from .models import Product, Category, StockOperation, StockOperationItem
+from django.db.models import Count, F, Q, Sum
+
+from .models import Category, Product, StockOperationItem
 
 
 def get_active_products_queryset():
-    """Возвращает базовый queryset для активных товаров"""
     return Product.objects.filter(is_active=True)
 
 
@@ -15,7 +15,7 @@ def get_products_with_category():
 def check_barcode_exists(barcode):
     cache_key = f"barcode_exists_{barcode}"
     result = cache.get(cache_key)
-    
+
     if result is None:
         result = Product.objects.filter(barcode=barcode).exists()
         cache.set(cache_key, result, 300)
@@ -25,12 +25,10 @@ def check_barcode_exists(barcode):
 def get_products_stats():
     cache_key = "products_stats"
     stats = cache.get(cache_key)
-    
+
     if stats is None:
         stats = Product.objects.filter(is_active=True).aggregate(
-            count=Count('id'),
-            total_quantity=Sum('quantity'),
-            total_value=Sum(F('purchase_price') * F('quantity'))
+            count=Count("id"), total_quantity=Sum("quantity"), total_value=Sum(F("purchase_price") * F("quantity"))
         )
         cache.set(cache_key, stats, 600)
 

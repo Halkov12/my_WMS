@@ -41,7 +41,6 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateTimeField("Дата народження", blank=True, null=True)
     photo = models.ImageField("Фото", upload_to="img/profiles", null=True, blank=True)
     role = models.PositiveIntegerField("Роль", choices=ROLE_CHOICES, default=ROLE_CHOICES.SELLER)
-    
 
     position = models.CharField("Посада", max_length=100, blank=True)
     department = models.CharField("Департамент", max_length=100, blank=True)
@@ -81,20 +80,24 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     def get_age(self):
         if self.birth_date:
             today = timezone.now().date()
-            return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+            return (
+                today.year
+                - self.birth_date.year
+                - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+            )
         return None
 
     def get_role_display_uk(self):
         role_names = {
             ROLE_CHOICES.WORKER: "Працівник",
-            ROLE_CHOICES.MANAGER: "Менеджер", 
-            ROLE_CHOICES.SELLER: "Продавець"
+            ROLE_CHOICES.MANAGER: "Менеджер",
+            ROLE_CHOICES.SELLER: "Продавець",
         }
         return role_names.get(self.role, "Невідомо")
 
     def increment_profile_views(self):
         self.profile_views += 1
-        self.save(update_fields=['profile_views'])
+        self.save(update_fields=["profile_views"])
 
     def update_last_login(self):
         self.last_login_date = timezone.now()
