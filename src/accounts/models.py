@@ -41,8 +41,8 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateTimeField("Дата народження", blank=True, null=True)
     photo = models.ImageField("Фото", upload_to="img/profiles", null=True, blank=True)
     role = models.PositiveIntegerField("Роль", choices=ROLE_CHOICES, default=ROLE_CHOICES.SELLER)
+    
 
-    # Дополнительные поля для расширенного профиля
     position = models.CharField("Посада", max_length=100, blank=True)
     department = models.CharField("Департамент", max_length=100, blank=True)
     address = models.TextField("Адреса", blank=True)
@@ -52,13 +52,9 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     twitter = models.URLField("Twitter", blank=True)
     facebook = models.URLField("Facebook", blank=True)
     instagram = models.URLField("Instagram", blank=True)
-
-    # Настройки профиля
     show_email = models.BooleanField("Показувати email", default=True)
     show_phone = models.BooleanField("Показувати телефон", default=False)
     show_birth_date = models.BooleanField("Показувати дату народження", default=False)
-
-    # Статистика активности
     last_login_date = models.DateTimeField("Останній вхід", null=True, blank=True)
     total_logins = models.PositiveIntegerField("Всього входів", default=0)
     profile_views = models.PositiveIntegerField("Переглядів профілю", default=0)
@@ -77,45 +73,35 @@ class Customer(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     def get_short_name(self):
-        """Return the short name for the user."""
         return self.first_name
 
     def get_registration_duration(self):
         return timezone.now() - self.date_joined
 
     def get_age(self):
-        """Возвращает возраст пользователя"""
         if self.birth_date:
             today = timezone.now().date()
-            return (
-                today.year
-                - self.birth_date.year
-                - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
-            )
+            return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
         return None
 
     def get_role_display_uk(self):
-        """Возвращает название роли на украинском"""
         role_names = {
             ROLE_CHOICES.WORKER: "Працівник",
-            ROLE_CHOICES.MANAGER: "Менеджер",
-            ROLE_CHOICES.SELLER: "Продавець",
+            ROLE_CHOICES.MANAGER: "Менеджер", 
+            ROLE_CHOICES.SELLER: "Продавець"
         }
         return role_names.get(self.role, "Невідомо")
 
     def increment_profile_views(self):
-        """Увеличивает счетчик просмотров профиля"""
         self.profile_views += 1
-        self.save(update_fields=["profile_views"])
+        self.save(update_fields=['profile_views'])
 
     def update_last_login(self):
-        """Обновляет информацию о последнем входе"""
         self.last_login_date = timezone.now()
         self.total_logins += 1
         self.save(update_fields=["last_login_date", "total_logins"])
 
     def get_last_login_display(self):
-        """Возвращает отображаемую дату последнего входа"""
         if self.last_login_date:
             return self.last_login_date
         elif self.last_login:
@@ -123,11 +109,8 @@ class Customer(AbstractBaseUser, PermissionsMixin):
         return None
 
     def get_total_logins_display(self):
-        """Возвращает отображаемое количество входов"""
-        # Если есть кастомное поле, используем его
         if self.total_logins > 0:
             return self.total_logins
-        # Иначе проверяем, был ли хотя бы один вход
         elif self.last_login_date or self.last_login:
             return 1
         return 0
@@ -141,7 +124,6 @@ class Customer(AbstractBaseUser, PermissionsMixin):
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def save(self, *args, **kwargs):
-        # Если это новый пользователь, инициализируем статистику
         if not self.pk:
             self.total_logins = 0
             self.profile_views = 0

@@ -13,15 +13,13 @@ class CustomerManager(UserManager):
         return user
 
     def _create_user(self, email, password, **extra_fields):
-        """
-        Create and save a user with the given email, and password.
-        """
+        
         user = self._create_user_object(email, password, **extra_fields)
         user.save(using=self._db)
         return user
 
     async def _acreate_user(self, email, password, **extra_fields):
-        """See _create_user()"""
+        
         user = self._create_user_object(email, password, **extra_fields)
         await user.asave(using=self._db)
         return user

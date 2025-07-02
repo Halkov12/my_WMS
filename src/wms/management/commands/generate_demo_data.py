@@ -91,7 +91,7 @@ class Command(BaseCommand):
     help = "Генерує 5 категорій, 100 товарів, операції і 5 користувачів з різними ролями."
 
     def handle(self, *args, **kwargs):
-        # Создание пользователей
+
         users = []
         for i in range(5):
             user, created = Customer.objects.get_or_create(
@@ -108,21 +108,19 @@ class Command(BaseCommand):
             users.append(user)
         self.stdout.write(self.style.SUCCESS(f"Створено користувачів: {len(users)}"))
 
-        # Создание категорий
         categories = []
-        for name in CATEGORY_NAMES:
-            cat, _ = Category.objects.get_or_create(name=name)
+        for i in range(1, 6):
+            cat, _ = Category.objects.get_or_create(name=f'Категорія {i}')
             categories.append(cat)
         self.stdout.write(self.style.SUCCESS(f"Створено категорій: {len(categories)}"))
 
-        # Создание товаров
         products = []
         for i in range(1, 101):
             cat = categories[(i - 1) // 20]
             prod_name = random.choice(PRODUCT_NAMES) + f" {i}"
             barcode = str(100000000000 + i)
             prod, _ = Product.objects.get_or_create(
-                name=prod_name,
+                name=f'Товар {i}',
                 defaults={
                     "barcode": barcode,
                     "category": cat,
@@ -137,7 +135,7 @@ class Command(BaseCommand):
             products.append(prod)
         self.stdout.write(self.style.SUCCESS(f"Створено товарів: {len(products)}"))
 
-        # Операции (по 2 на товар: приход и выдача)
+
         reasons = [
             "Планове поповнення складу",
             "Повернення від клієнта",
@@ -154,4 +152,13 @@ class Command(BaseCommand):
                     created_at=timezone.now() - timezone.timedelta(days=random.randint(0, 60)),
                 )
                 StockOperationItem.objects.create(operation=op, product=prod, quantity=random.randint(1, 10))
-        self.stdout.write(self.style.SUCCESS("Створено операції для товарів."))
+
+
+                StockOperationItem.objects.create(
+                    operation=op,
+                    product=prod,
+                    quantity=random.randint(1, 10)
+                )
+                StockOperationItem.objects.create(operation=op, product=prod, quantity=random.randint(1, 10))
+                self.stdout.write(self.style.SUCCESS("Створено операції для товарів."))
+

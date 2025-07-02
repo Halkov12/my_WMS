@@ -1,15 +1,13 @@
 from datetime import timedelta
 from pathlib import Path
-
 import environ
-from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / ".env")
+environ.Env.read_env(BASE_DIR / '.env')
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -94,20 +92,18 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Кэширование
 CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
-        "TIMEOUT": 300,  # 5 минут по умолчанию
-        "OPTIONS": {
-            "MAX_ENTRIES": 1000,
-        },
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
     }
 }
 
@@ -155,14 +151,12 @@ JAZZMIN_SETTINGS = {
         "wms.changelog": "bi bi-clock-history",
     },
     "custom_links": {
-        "accounts": [
-            {
-                "name": "На сайт",
-                "url": "/",
-                "icon": "bi bi-house-door",
-                "permissions": ["auth.view_user"],
-            }
-        ],
+        "accounts": [{
+            "name": "На сайт",
+            "url": "/",
+            "icon": "bi bi-house-door",
+            "permissions": ["auth.view_user"]
+        }],
     },
     "show_ui_builder": False,
     # "site_icon": "/static/img/favicon.ico",
