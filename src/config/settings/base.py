@@ -3,10 +3,8 @@ from pathlib import Path
 
 import environ
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Initialize environment variables
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -96,7 +94,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Кэширование
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

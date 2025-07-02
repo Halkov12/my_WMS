@@ -1,6 +1,6 @@
 import os
 
-from config.settings.base import env
+from config.settings.base import *
 
 SECRET_KEY = env("SECRET_KEY", default="dev-secret-key")
 

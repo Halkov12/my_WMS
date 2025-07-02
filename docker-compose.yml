@@ -2,11 +2,10 @@ services:
   backend:
     build: ./
     container_name: wms_container
-    working_dir: /wms
+    working_dir: /wms/src
     ports:
       - "8000:8010"
-    command:
-      ./commands/start_server_${MODE}.sh
+    command: /wms/commands/start_server_${MODE}.sh
     volumes:
       - ./src:/wms/src
       - ./commands:/wms/commands

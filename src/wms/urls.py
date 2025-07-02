@@ -9,8 +9,6 @@ from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        StockOperationReportView, ToolsView, WriteOffView,
                        backup_all_data, backup_products, barcode_generator,
                        export_products_csv, export_products_excel,
-                       generate_categories_view, generate_operations_view,
-                       generate_products_view, generate_users_view,
                        import_products, preview_import_products,
                        preview_import_products_ajax, restore_all_data,
                        restore_products, send_email_to_managers)
@@ -50,8 +48,4 @@ urlpatterns = [
     path("help/reports/", HelpReportsView.as_view(), name="help_reports"),
     path("help/tools/", HelpToolsView.as_view(), name="help_tools"),
     path("help/faq/", HelpFaqView.as_view(), name="help_faq"),
-    path("generate-users/", generate_users_view, name="generate_users"),
-    path("generate-categories/", generate_categories_view, name="generate_categories"),
-    path("generate-products/", generate_products_view, name="generate_products"),
-    path("generate-operations/", generate_operations_view, name="generate_operations"),
 ]

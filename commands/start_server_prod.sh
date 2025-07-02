@@ -1,7 +1,7 @@
 #!/bin/sh
 
-python src/manage.py migrate
-python src/manage.py check
-python src/manage.py collectstatic --noinput
+python manage.py migrate
+python manage.py check
+python manage.py collectstatic --noinput
 
-python src/manage.py runserver 0:8010
+python manage.py runserver 0:8010
