@@ -2,7 +2,7 @@ import os
 
 from config.settings.base import *  # NOQA:F403
 
-SECRET_KEY = env("SECRET_KEY")  # NOQA:F405
+SECRET_KEY = env("SECRET_KEY", default="insecure-key-for-dev-only")  # NOQA:F405
 
 DEBUG = True
 
