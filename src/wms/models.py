@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from djmoney.models.fields import MoneyField
 
@@ -62,6 +62,10 @@ class Product(BaseModel):
     class Meta:
         verbose_name = "Товар"
         verbose_name_plural = "Товари"
+        indexes = [
+            models.Index(fields=["barcode"]),
+            models.Index(fields=["category"]),
+        ]
 
     def __str__(self):
         return f"{self.name} {self.selling_price} {self.quantity}"
@@ -115,6 +119,10 @@ class StockOperationItem(models.Model):
     class Meta:
         verbose_name = "Позиція операції"
         verbose_name_plural = "Позиції операцій"
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["operation"]),
+        ]
 
     def __str__(self):
         return f"{self.operation} {self.product} {self.quantity}"
@@ -166,21 +174,21 @@ def auto_delete_old_photo_on_change(sender, instance, **kwargs):
 
 class Notification(models.Model):
     TYPE_CHOICES = [
-        (1, 'Новий товар'),
-        (2, 'Прийом товару'),
-        (3, 'Видача товару'),
-        (4, 'Списання'),
-        (5, 'Новий користувач'),
-        (6, 'Інше'),
+        (1, "Новий товар"),
+        (2, "Прийом товару"),
+        (3, "Видача товару"),
+        (4, "Списання"),
+        (5, "Новий користувач"),
+        (6, "Інше"),
     ]
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     message = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey('accounts.Customer', null=True, blank=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey("accounts.Customer", null=True, blank=True, on_delete=models.SET_NULL)
     is_read = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.message
@@ -189,18 +197,19 @@ class Notification(models.Model):
 @receiver(post_save, sender=Product)
 def log_product_save(sender, instance, created, **kwargs):
     from wms.models import ChangeLog
-    user = getattr(instance, '_log_user', None)
+
+    user = getattr(instance, "_log_user", None)
     if created:
-        action = 'Створено товар'
+        action = "Створено товар"
         details = {
-            'name': instance.name,
-            'barcode': instance.barcode,
-            'quantity': float(instance.quantity),
-            'purchase_price': float(instance.purchase_price.amount) if instance.purchase_price else None,
-            'selling_price': float(instance.selling_price.amount) if instance.selling_price else None,
+            "name": instance.name,
+            "barcode": instance.barcode,
+            "quantity": float(instance.quantity),
+            "purchase_price": float(instance.purchase_price.amount) if instance.purchase_price else None,
+            "selling_price": float(instance.selling_price.amount) if instance.selling_price else None,
         }
     else:
-        action = 'Змінено товар'
+        action = "Змінено товар"
         try:
             old = Product.objects.get(pk=instance.pk)
         except Product.DoesNotExist:
@@ -208,51 +217,56 @@ def log_product_save(sender, instance, created, **kwargs):
         details = {}
         if old:
             fields = [
-                ('name', old.name, instance.name),
-                ('barcode', old.barcode, instance.barcode),
-                ('quantity', float(old.quantity), float(instance.quantity)),
-                ('purchase_price', float(old.purchase_price.amount) if old.purchase_price else None, float(instance.purchase_price.amount) if instance.purchase_price else None),
-                ('selling_price', float(old.selling_price.amount) if old.selling_price else None, float(instance.selling_price.amount) if instance.selling_price else None),
+                ("name", old.name, instance.name),
+                ("barcode", old.barcode, instance.barcode),
+                ("quantity", float(old.quantity), float(instance.quantity)),
+                (
+                    "purchase_price",
+                    float(old.purchase_price.amount) if old.purchase_price else None,
+                    float(instance.purchase_price.amount) if instance.purchase_price else None,
+                ),
+                (
+                    "selling_price",
+                    float(old.selling_price.amount) if old.selling_price else None,
+                    float(instance.selling_price.amount) if instance.selling_price else None,
+                ),
             ]
             for field, old_val, new_val in fields:
                 if old_val != new_val:
-                    details[field] = {'old': old_val, 'new': new_val}
-    ChangeLog.objects.create(
-        user=user,
-        action=action,
-        product=instance,
-        details=details
-    )
+                    details[field] = {"old": old_val, "new": new_val}
+    ChangeLog.objects.create(user=user, action=action, product=instance, details=details)
 
 
 @receiver(post_delete, sender=Product)
 def log_product_delete(sender, instance, **kwargs):
     from wms.models import ChangeLog
-    user = getattr(instance, '_log_user', None)
+
+    user = getattr(instance, "_log_user", None)
     ChangeLog.objects.create(
         user=user,
-        action='Видалено товар',
+        action="Видалено товар",
         product=instance,
         details={
-            'name': instance.name,
-            'barcode': instance.barcode,
-        }
+            "name": instance.name,
+            "barcode": instance.barcode,
+        },
     )
 
 
 @receiver(post_save, sender=StockOperation)
 def log_operation_save(sender, instance, created, **kwargs):
     from wms.models import ChangeLog
+
     user = instance.created_by
     if created:
-        action = 'Створено операцію'
+        action = "Створено операцію"
         details = {
-            'operation_type': instance.get_operation_type_display(),
-            'reason': instance.reason,
-            'note': instance.note,
+            "operation_type": instance.get_operation_type_display(),
+            "reason": instance.reason,
+            "note": instance.note,
         }
     else:
-        action = 'Змінено операцію'
+        action = "Змінено операцію"
         try:
             old = StockOperation.objects.get(pk=instance.pk)
         except StockOperation.DoesNotExist:
@@ -260,31 +274,28 @@ def log_operation_save(sender, instance, created, **kwargs):
         details = {}
         if old:
             fields = [
-                ('operation_type', old.get_operation_type_display(), instance.get_operation_type_display()),
-                ('reason', old.reason, instance.reason),
-                ('note', old.note, instance.note),
+                ("operation_type", old.get_operation_type_display(), instance.get_operation_type_display()),
+                ("reason", old.reason, instance.reason),
+                ("note", old.note, instance.note),
             ]
             for field, old_val, new_val in fields:
                 if old_val != new_val:
-                    details[field] = {'old': old_val, 'new': new_val}
-    ChangeLog.objects.create(
-        user=user,
-        action=action,
-        details=details
-    )
+                    details[field] = {"old": old_val, "new": new_val}
+    ChangeLog.objects.create(user=user, action=action, details=details)
 
 
 @receiver(post_delete, sender=StockOperation)
 def log_operation_delete(sender, instance, **kwargs):
     from wms.models import ChangeLog
+
     user = instance.created_by
     ChangeLog.objects.create(
         user=user,
-        action='Видалено операцію',
+        action="Видалено операцію",
         details={
-            'operation_type': instance.get_operation_type_display(),
-            'reason': instance.reason,
-        }
+            "operation_type": instance.get_operation_type_display(),
+            "reason": instance.reason,
+        },
     )
 
 
@@ -302,13 +313,19 @@ class Inventory(models.Model):
 
 
 class InventoryItem(models.Model):
-    inventory = models.ForeignKey(Inventory, related_name="items", on_delete=models.CASCADE, verbose_name="Інвентаризація")
+    inventory = models.ForeignKey(
+        Inventory, related_name="items", on_delete=models.CASCADE, verbose_name="Інвентаризація"
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
     actual_quantity = models.DecimalField("Фактичний залишок", max_digits=10, decimal_places=2)
 
     class Meta:
         verbose_name = "Позиція інвентаризації"
         verbose_name_plural = "Позиції інвентаризації"
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["inventory"]),
+        ]
 
     def __str__(self):
         return f"{self.product} ({self.actual_quantity})"

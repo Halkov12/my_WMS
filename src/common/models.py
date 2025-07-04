@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 
@@ -26,26 +26,29 @@ class Setting(models.Model):
 @receiver(post_save, sender=Setting)
 def log_setting_save(sender, instance, created, **kwargs):
     from wms.models import ChangeLog
-    user = getattr(instance, '_log_user', None)
-    action = 'Створено налаштування' if created else 'Змінено налаштування'
+
+    user = getattr(instance, "_log_user", None)
+    action = "Створено налаштування" if created else "Змінено налаштування"
     ChangeLog.objects.create(
         user=user,
         action=action,
         details={
-            'key': instance.key,
-            'value': instance.value,
-        }
+            "key": instance.key,
+            "value": instance.value,
+        },
     )
+
 
 @receiver(post_delete, sender=Setting)
 def log_setting_delete(sender, instance, **kwargs):
     from wms.models import ChangeLog
-    user = getattr(instance, '_log_user', None)
+
+    user = getattr(instance, "_log_user", None)
     ChangeLog.objects.create(
         user=user,
-        action='Видалено налаштування',
+        action="Видалено налаштування",
         details={
-            'key': instance.key,
-            'value': instance.value,
-        }
+            "key": instance.key,
+            "value": instance.value,
+        },
     )

@@ -1,37 +1,76 @@
-from django.core.management.base import BaseCommand
-from wms.models import Category, Product, StockOperation, StockOperationItem, OPERATION_CHOICES
 import random
+
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
 from faker import Faker
 
+from wms.models import OPERATION_CHOICES, Category, Product, StockOperation
+
 PRODUCT_NAMES = [
-    "iPhone 14 Pro", "Samsung Galaxy S23", "Xiaomi Mi 13", "MacBook Air M2", "Dell XPS 13",
-    "Sony WH-1000XM5", "Apple Watch Series 8", "Canon EOS R6", "GoPro Hero 11", "Nintendo Switch OLED",
-    "Dyson V15 Detect", "Bose QuietComfort 45", "Logitech MX Master 3S", "Kindle Paperwhite",
-    "Philips Hue Starter Kit", "Samsung QLED TV", "Apple iPad Pro", "Lenovo ThinkPad X1", "JBL Charge 5",
-    "Garmin Fenix 7", "Razer DeathAdder V2", "Google Pixel 7", "OnePlus 11 Pro", "Asus ROG Phone 6",
-    "HP Envy 15", "Microsoft Surface Pro 9", "DJI Mini 3 Pro", "Fitbit Versa 4", "Canon Pixma G6020",
-    "Brother HL-L2350DW", "TP-Link Archer AX50", "Xiaomi Roborock S7", "Samsung Galaxy Tab S8",
-    "Apple AirPods Pro 2", "Sony PlayStation 5", "Xbox Series X", "LG UltraFine 5K", "BenQ GW2780",
-    "Acer Predator Helios 300", "MSI GeForce RTX 4070", "Kingston NV2 SSD", "WD My Passport 2TB",
-    "SanDisk Extreme Pro", "Seagate IronWolf 8TB", "Corsair Vengeance 32GB", "G.Skill Trident Z5",
-    "Asus TUF Gaming B660M", "Gigabyte Z690 Aorus", "Intel Core i9-13900K", "AMD Ryzen 9 7950X"
+    "iPhone 14 Pro",
+    "Samsung Galaxy S23",
+    "Xiaomi Mi 13",
+    "MacBook Air M2",
+    "Dell XPS 13",
+    "Sony WH-1000XM5",
+    "Apple Watch Series 8",
+    "Canon EOS R6",
+    "GoPro Hero 11",
+    "Nintendo Switch OLED",
+    "Dyson V15 Detect",
+    "Bose QuietComfort 45",
+    "Logitech MX Master 3S",
+    "Kindle Paperwhite",
+    "Philips Hue Starter Kit",
+    "Samsung QLED TV",
+    "Apple iPad Pro",
+    "Lenovo ThinkPad X1",
+    "JBL Charge 5",
+    "Garmin Fenix 7",
+    "Razer DeathAdder V2",
+    "Google Pixel 7",
+    "OnePlus 11 Pro",
+    "Asus ROG Phone 6",
+    "HP Envy 15",
+    "Microsoft Surface Pro 9",
+    "DJI Mini 3 Pro",
+    "Fitbit Versa 4",
+    "Canon Pixma G6020",
+    "Brother HL-L2350DW",
+    "TP-Link Archer AX50",
+    "Xiaomi Roborock S7",
+    "Samsung Galaxy Tab S8",
+    "Apple AirPods Pro 2",
+    "Sony PlayStation 5",
+    "Xbox Series X",
+    "LG UltraFine 5K",
+    "BenQ GW2780",
+    "Acer Predator Helios 300",
+    "MSI GeForce RTX 4070",
+    "Kingston NV2 SSD",
+    "WD My Passport 2TB",
+    "SanDisk Extreme Pro",
+    "Seagate IronWolf 8TB",
+    "Corsair Vengeance 32GB",
+    "G.Skill Trident Z5",
+    "Asus TUF Gaming B660M",
+    "Gigabyte Z690 Aorus",
+    "Intel Core i9-13900K",
+    "AMD Ryzen 9 7950X",
 ]
 
-CATEGORY_NAMES = [
-    "Смартфони",
-    "Ноутбуки",
-    "Аудіотехніка",
-    "Побутова техніка",
-    "Гаджети"
-]
+CATEGORY_NAMES = ["Смартфони", "Ноутбуки", "Аудіотехніка", "Побутова техніка", "Гаджети"]
+
 
 class Command(BaseCommand):
-    help = "Генерує 5 категорій, по 20 продуктів з реальними назвами і штрихкодами, і до кожного продукту по 2-3 операції."
+    help = (
+        "Генерує 5 категорій, по 20 продуктів з реальними назвами і штрихкодами, і до кожного продукту по 2-3 операції."
+    )
 
     def handle(self, *args, **options):
         # Очищаем только связанные с товарами и операциями данные, не трогая пользователей
         from wms.models import ChangeLog, StockOperationItem
+
         ChangeLog.objects.all().delete()
         StockOperationItem.objects.all().delete()
         StockOperation.objects.all().delete()
@@ -52,7 +91,7 @@ class Command(BaseCommand):
                 name = random.choice(PRODUCT_NAMES)
                 # Генерируем уникальный штрихкод (13 цифр)
                 while True:
-                    barcode = str(random.randint(10**12, 10**13-1))
+                    barcode = str(random.randint(10**12, 10**13 - 1))
                     if barcode not in used_barcodes:
                         used_barcodes.add(barcode)
                         break
@@ -67,7 +106,7 @@ class Command(BaseCommand):
                     purchase_price=purchase_price,
                     quantity=quantity,
                     category=cat,
-                    description=description
+                    description=description,
                 )
                 products.append(prod)
 
@@ -83,15 +122,13 @@ class Command(BaseCommand):
                     operation_type=op_type,
                     created_by=user,
                     reason=f"Демо операція {op_type.label}",
-                    note="Автоматично згенеровано"
+                    note="Автоматично згенеровано",
                 )
-                StockOperationItem.objects.create(
-                    operation=operation,
-                    product=prod,
-                    quantity=random.randint(1, 50)
-                )
+                StockOperationItem.objects.create(operation=operation, product=prod, quantity=random.randint(1, 50))
                 operations.append(operation)
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Створено {len(categories)} категорій, {len(products)} продуктів, {len(operations)} операцій."
-        )) 
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Створено {len(categories)} категорій, {len(products)} продуктів, {len(operations)} операцій."
+            )
+        )

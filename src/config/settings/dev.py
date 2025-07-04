@@ -1,12 +1,12 @@
 import os
 
-from config.settings.base import *
+from config.settings.base import *  # NOQA:F403
 
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY")  # NOQA:F405
 
 DEBUG = True
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])  # NOQA:F405
 
 # MIDDLEWARE + = ['']
 

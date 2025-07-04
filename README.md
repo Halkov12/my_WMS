@@ -1,20 +1,21 @@
 # Warehouse Management System (WMS)
 
-Modern warehouse management system built with Django using Bootstrap 5 and interactive components.
+A modern warehouse management system built with Django, Bootstrap 5, and interactive components.
+
+---
 
 ## 🚀 Features
 
 ### 📦 Product Management
-- Create and edit products
-- Product categorization
+- Create, edit, and categorize products
 - Product photo upload
 - Barcodes and unique identifiers
 - Product search and filtering
 
 ### 🔄 Warehouse Operations
-- **Product Receipt** - receiving products to warehouse
-- **Product Issue** - issuing products from warehouse
-- **Product Write-off** - writing off damaged or lost products
+- **Product Receipt**: Add products to warehouse stock
+- **Product Issue**: Remove products from warehouse stock
+- **Product Write-off**: Write off damaged or lost products
 - Detailed logging of all operations
 - Change history with user tracking
 
@@ -26,31 +27,37 @@ Modern warehouse management system built with Django using Bootstrap 5 and inter
 - Category statistics
 
 ### 🛠️ Tools (Managers Only)
-- **Import/Export** - bulk product upload from CSV/Excel
-- **Backup** - data backup and restore
-- **Barcode Generator** - Code 128 barcode creation
-- **Full Backup** - complete system data backup
+- **Import/Export**: Bulk product upload from CSV/Excel
+- **Backup**: Data backup and restore (products or full system)
+- **Barcode Generator**: Create Code 128 barcodes
+- **Inventory Creation**: Start a new inventory check
+- **Send Email**: Notify managers or staff
+- **User Management**: Add, edit, or remove users
 
 ### 👥 Role System
-- **Manager** - full access to all functions
-- **Seller** - issue and write-off operations
-- **Worker** - product and operation viewing
+- **Manager**: Full access to all functions
+- **Seller**: Issue and write-off operations
+- **Worker**: View products and operations
 
 ### 📱 Responsive Design
-- Bootstrap 5 for modern interface
+- Bootstrap 5 for a modern interface
 - Mobile navigation
 - Dark/light theme
 - Interactive components
+
+---
 
 ## 🛠️ Technologies
 
 - **Backend**: Django 4.2+
 - **Frontend**: Bootstrap 5, JavaScript
-- **Database**: SQLite/PostgreSQL
+- **Database**: SQLite or PostgreSQL
 - **Money**: django-money
 - **Barcodes**: python-barcode
 - **Export**: openpyxl, pandas
 - **Reports**: reportlab
+
+---
 
 ## 📋 Requirements
 
@@ -58,20 +65,22 @@ Modern warehouse management system built with Django using Bootstrap 5 and inter
 - Django 4.2+
 - pip
 
+---
+
 ## 🚀 Installation
 
-### 1. Clone Repository
+### 1. Clone the Repository
 ```bash
 git clone <repository-url>
 cd my_WMS
 ```
 
-### 2. Create Virtual Environment
+### 2. Create a Virtual Environment
 ```bash
 python -m venv venv
 ```
 
-### 3. Activate Virtual Environment
+### 3. Activate the Virtual Environment
 
 **Windows:**
 ```bash
@@ -100,17 +109,19 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 7. Run Server
+### 7. Run the Server
 ```bash
 python manage.py runserver
 ```
 
-System will be available at: http://127.0.0.1:8000/
+The system will be available at: http://127.0.0.1:8000/
+
+---
 
 ## ⚙️ Configuration
 
 ### Environment Variables
-Create `.env` file in project root:
+Create a `.env` file in the project root:
 
 ```env
 DEBUG=True
@@ -135,53 +146,57 @@ DATABASES = {
 }
 ```
 
+---
+
 ## 📖 Usage
 
 ### Getting Started
-1. **Login** - use email and password
-2. **Create Products** - go to "Receipt" → "Create New Product"
-3. **Perform Operations** - use appropriate sections for receipt/issue/write-off
-4. **View Reports** - available in "Reports" section
+1. **Login** with your email and password
+2. **Create Products** via "Receipt" → "Create New Product"
+3. **Perform Operations**: Use the appropriate section for receipt, issue, or write-off
+4. **View Reports** in the "Reports" section
 
 ### User Roles
 
 #### Manager
-- Full access to all functions
+- Full access to all features
 - Product and operation management
-- Access to tools (import/export, backup)
+- Access to all tools (import/export, backup, inventory, email, user management)
 - Report generation
 
 #### Seller
-- Product viewing
-- Product issue
-- Product write-off
-- Access to barcode generator
+- View products
+- Issue and write-off products
+- Access barcode generator
 
 #### Worker
-- Product viewing
-- Operation viewing
-- Access to barcode generator
+- View products and operations
+- Access barcode generator
 
 ### Product Import
-1. Prepare CSV or Excel file with columns:
-   - `name` - product name (required)
-   - `quantity` - quantity (required)
-   - `purchase_price` - purchase price (required)
-   - `sale_price` - sale price (required)
-   - `barcode` - barcode (optional)
-   - `category` - category (optional)
-   - `unit` - unit of measurement (optional)
-   - `description` - description (optional)
-
+1. Prepare a CSV or Excel file with columns:
+   - `name` (required)
+   - `quantity` (required)
+   - `purchase_price` (required)
+   - `sale_price` (required)
+   - `barcode` (optional)
+   - `category` (optional)
+   - `unit` (optional)
+   - `description` (optional)
 2. Go to "Tools" → "Import Products"
-3. Upload file and preview
+3. Upload and preview the file
 4. Confirm import
 
 ### Backup
-- **Product Backup** - product data only
-- **Full Backup** - complete system data
-- Files saved in JSON format
-- Automatic naming with date and time
+- **Product Backup**: Only product data
+- **Full Backup**: Complete system data
+- Files are saved in JSON format with automatic naming (date/time)
+
+### Inventory Creation
+- Go to "Tools" → "Create Inventory"
+- Fill in the required information and confirm to start a new inventory check
+
+---
 
 ## 🐳 Docker
 
@@ -196,24 +211,28 @@ docker build -t wms .
 docker run -p 8000:8000 wms
 ```
 
+---
+
 ## 📁 Project Structure
 
 ```
 my_WMS/
 ├── src/                    # Main Django code
-│   ├── accounts/          # User management
-│   ├── api/              # API endpoints
-│   ├── common/           # Shared models and utilities
-│   ├── config/           # Django settings
-│   ├── templates/        # HTML templates
-│   └── wms/             # Main WMS logic
-├── docs/                 # Documentation
-├── nginx/               # Nginx configuration
-├── commands/            # Run scripts
-├── requirements.txt     # Python dependencies
-├── docker-compose.yml   # Docker Compose
-└── README.md           # This file
+│   ├── accounts/           # User management
+│   ├── api/                # API endpoints
+│   ├── common/             # Shared models and utilities
+│   ├── config/             # Django settings
+│   ├── templates/          # HTML templates
+│   └── wms/                # Main WMS logic
+├── docs/                   # Documentation
+├── nginx/                  # Nginx configuration
+├── commands/               # Run scripts
+├── requirements.txt        # Python dependencies
+├── docker-compose.yml      # Docker Compose
+└── README.md               # This file
 ```
+
+---
 
 ## 🔧 Development
 
@@ -237,30 +256,38 @@ python manage.py migrate
 python manage.py dumpdata > fixtures/initial_data.json
 ```
 
+---
+
 ## 📚 Documentation
 
-Detailed documentation available in the system:
-- Go to "Tools" → "Help"
+- In-app: Go to "Tools" → "Help"
 - Or open http://127.0.0.1:8000/help/
+
+---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+5. Open a Pull Request
+
+---
 
 ## 📄 License
 
-This project is distributed under the MIT License. See `LICENSE` file for details.
+Distributed under the MIT License. See the `LICENSE` file for details.
+
+---
 
 ## 📞 Support
 
-If you have questions or issues:
 - Create an Issue in the repository
-- Check the documentation in the system
-- Review FAQ in the help section
+- Check the in-app documentation
+- Review the FAQ in the help section
+
+---
 
 ## 🔄 Updates
 
@@ -274,4 +301,4 @@ python manage.py collectstatic
 
 ---
 
-**Warehouse Management System** - modern warehouse management solution 🚀
+**Warehouse Management System** – a modern solution for efficient warehouse operations 🚀

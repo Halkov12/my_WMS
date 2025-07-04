@@ -13,164 +13,42 @@
 
 <div class="row">
   <!-- Генератор штрихкодів - доступен всем -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-upc-scan text-primary" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Генератор штрихкодів</h5>
-        <p class="card-text">Створення штрихкодів у форматі Code 128 для маркування товарів.</p>
-        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">
-          Згенерувати штрихкод
-        </button>
-      </div>
-    </div>
-  </div>
+  {% include "wms/tools/_tool_card.html" with icon="bi-upc-scan text-primary" title="Генератор штрихкодів" desc="Створення штрихкодів у форматі Code 128 для маркування товарів." btn_html='<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">Згенерувати штрихкод</button>' %}
 
   <!-- Довідка - доступна всем -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-question-circle text-info" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Довідка</h5>
-        <p class="card-text">Детальна документація по використанню системи та вирішенню проблем.</p>
-        <a href="{% url 'wms:help_main' %}" class="btn btn-outline-info">Переглянути довідку</a>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:help_main' as help_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-question-circle text-info" title="Довідка" desc="Детальна документація по використанню системи та вирішенню проблем." btn_html='<a href="'|add:help_url|add:'" class="btn btn-outline-info">Переглянути довідку</a>' %}
 
   {% if user.role == 1 %}  <!-- Только для менеджеров (ROLE_CHOICES.MANAGER = 1) -->
   <!-- Експорт товарів - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-download text-success" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Експорт товарів</h5>
-        <p class="card-text">Вивантаження даних про товари в файли CSV або Excel для збереження або передачі.</p>
-        <div class="dropdown">
-          <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Експортувати
-          </button>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'wms:export_products_csv' %}">
-              <i class="bi bi-file-earmark-text"></i> CSV формат
-            </a></li>
-            <li><a class="dropdown-item" href="{% url 'wms:export_products_excel' %}">
-              <i class="bi bi-file-earmark-excel"></i> Excel формат
-            </a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:export_products_csv' as export_csv_url %}
+  {% url 'wms:export_products_excel' as export_excel_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-download text-success" title="Експорт товарів" desc="Вивантаження даних про товари в файли CSV або Excel для збереження або передачі." btn_html='<div class="dropdown"><button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Експортувати</button><ul class="dropdown-menu"><li><a class="dropdown-item" href="'|add:export_csv_url|add:'"><i class="bi bi-file-earmark-text"></i> CSV формат</a></li><li><a class="dropdown-item" href="'|add:export_excel_url|add:'"><i class="bi bi-file-earmark-excel"></i> Excel формат</a></li></ul></div>' %}
 
   <!-- Імпорт товарів - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-upload text-warning" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Імпорт товарів</h5>
-        <p class="card-text">Масове додавання товарів з файлів CSV або Excel з попереднім переглядом.</p>
-        <a href="{% url 'wms:import_products' %}" class="btn btn-outline-warning">
-          <i class="bi bi-upload"></i> Імпортувати товари
-        </a>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:import_products' as import_products_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-upload text-warning" title="Імпорт товарів" desc="Масове додавання товарів з файлів CSV або Excel з попереднім переглядом." btn_html='<a href="'|add:import_products_url|add:'" class="btn btn-outline-warning"><i class="bi bi-upload"></i> Імпортувати товари</a>' %}
 
   <!-- Резервна копія товарів - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-cloud-upload text-secondary" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Резервна копія товарів</h5>
-        <p class="card-text">Створення резервної копії тільки товарів для захисту від втрати даних.</p>
-        <div class="d-grid gap-2">
-          <a href="{% url 'wms:backup_products' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-download"></i> Створити резервну копію
-          </a>
-          <a href="{% url 'wms:restore_products' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-upload"></i> Відновити товари
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:backup_products' as backup_products_url %}
+  {% url 'wms:restore_products' as restore_products_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-cloud-upload text-secondary" title="Резервна копія товарів" desc="Створення резервної копії тільки товарів для захисту від втрати даних." btn_html='<div class="d-grid gap-2"><a href="'|add:backup_products_url|add:'" class="btn btn-outline-secondary"><i class="bi bi-download"></i> Створити резервну копію</a><a href="'|add:restore_products_url|add:'" class="btn btn-outline-secondary"><i class="bi bi-upload"></i> Відновити товари</a></div>' %}
 
   <!-- Повна резервна копія - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-cloud-arrow-up text-danger" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Повна резервна копія</h5>
-        <p class="card-text">Створення повної резервної копії всіх даних системи включаючи користувачів та операції.</p>
-        <div class="d-grid gap-2">
-          <a href="{% url 'wms:backup_all_data' %}" class="btn btn-outline-danger">
-            <i class="bi bi-download"></i> Створити повну копію
-          </a>
-          <a href="{% url 'wms:restore_all_data' %}" class="btn btn-outline-danger">
-            <i class="bi bi-upload"></i> Відновити всі дані
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:backup_all_data' as backup_all_data_url %}
+  {% url 'wms:restore_all_data' as restore_all_data_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-cloud-arrow-up text-danger" title="Повна резервна копія" desc="Створення повної резервної копії всіх даних системи включаючи користувачів та операції." btn_html='<div class="d-grid gap-2"><a href="'|add:backup_all_data_url|add:'" class="btn btn-outline-danger"><i class="bi bi-download"></i> Створити повну копію</a><a href="'|add:restore_all_data_url|add:'" class="btn btn-outline-danger"><i class="bi bi-upload"></i> Відновити всі дані</a></div>' %}
 
   <!-- Управління користувачами - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-people text-primary" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Управління користувачами</h5>
-        <p class="card-text">Додавання, редагування та видалення користувачів системи.</p>
-        <a href="/admin/accounts/customer/" class="btn btn-outline-primary" target="_blank">
-          <i class="bi bi-person-lines-fill"></i> Перейти до управління
-        </a>
-      </div>
-    </div>
-  </div>
+  {% include "wms/tools/_tool_card.html" with icon="bi-people text-primary" title="Управління користувачами" desc="Додавання, редагування та видалення користувачів системи." btn_html='<a href="/admin/accounts/customer/" class="btn btn-outline-primary" target="_blank"><i class="bi bi-person-lines-fill"></i> Перейти до управління</a>' %}
 
   <!-- Відправка Email - только для менеджеров -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <i class="bi bi-envelope text-info" style="font-size: 2.5rem;"></i>
-        </div>
-        <h5 class="card-title">Відправка Email</h5>
-        <p class="card-text">Відправка повідомлень менеджерам, працівникам або вказаним email адресам.</p>
-        <a href="{% url 'wms:send_email' %}" class="btn btn-outline-info">
-          <i class="bi bi-send"></i> Відправити Email
-        </a>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:send_email' as send_email_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-envelope text-info" title="Відправка Email" desc="Відправка повідомлень менеджерам, працівникам або вказаним email адресам." btn_html='<a href="'|add:send_email_url|add:'" class="btn btn-outline-info"><i class="bi bi-send"></i> Відправити Email</a>' %}
 
   <!-- Створити інвентаризацію -->
-  <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <a href="{% url 'wms:inventory_create' %}" class="btn btn-warning d-inline-flex align-items-center gap-2">
-            <i class="bi bi-clipboard-plus"></i> Створити інвентаризацію
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% url 'wms:inventory_create' as inventory_create_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-clipboard-plus text-warning" title="Створити інвентаризацію" desc="Створення нової інвентаризації для контролю залишків на складі." btn_html='<a href="'|add:inventory_create_url|add:'" class="btn btn-outline-warning d-inline-flex align-items-center gap-2"><i class="bi bi-clipboard-plus"></i> Створити інвентаризацію</a>' %}
   {% endif %}
 </div>
 

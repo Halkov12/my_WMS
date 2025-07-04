@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -15,9 +16,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
-from django.db import transaction
-from django.db.models import Count, Q, Sum, F
+from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate
+from django.forms import modelform_factory, modelformset_factory
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -27,25 +28,18 @@ from django.utils.timezone import now
 from django.views import View
 from django.views.generic import (CreateView, DeleteView, ListView,
                                   TemplateView, UpdateView)
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from django.conf import settings
-import os
-from pathlib import Path
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from django.forms import modelform_factory, modelformset_factory
 
 from accounts.models import ROLE_CHOICES, Customer
 from wms.forms import AddProductForm, ProductCreateForm
-from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Product,
-                        StockOperation, StockOperationItem, Notification, Inventory, InventoryItem)
-from wms.utils import (check_barcode_exists, get_categories_with_stats,
-                       get_low_stock_products, get_products_stats,
-                       get_recent_operations)
+from wms.models import (OPERATION_CHOICES, Category, ChangeLog, Inventory,
+                        InventoryItem, Notification, Product, StockOperation,
+                        StockOperationItem)
+from wms.utils import (check_barcode_exists, export_table_to_pdf,
+                       get_categories_with_stats, get_low_stock_products,
+                       get_products_stats, get_recent_operations,
+                       process_stock_operation)
+
+logger = logging.getLogger(__name__)
 
 
 class IndexView(TemplateView):
@@ -75,6 +69,8 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         context["total_quantity"] = products_stats["total_quantity"] or 0
         context["total_products_count"] = products_stats["count"] or 0
         context["total_stock_value"] = float(products_stats["total_value"] or 0)
+        usd_rate = 40.0  # Текущий курс доллара
+        context["total_stock_value_usd"] = context["total_stock_value"] / usd_rate if usd_rate else 0
         context["categories_data"] = get_categories_with_stats().values("name", "active_products", "total_quantity")
         category_stock_data = (
             Category.objects.annotate(total_quantity=Sum("product__quantity", filter=Q(product__is_active=True)))
@@ -111,7 +107,6 @@ class DashboardView(RoleRequiredMixin, TemplateView):
         context["receipt_data"] = json.dumps(receipt_data)
         context["issue_data"] = json.dumps(issue_data)
         context["write_off_data"] = json.dumps(write_off_data)
-        recent_ops = get_recent_operations(10)
         context["recent_operations"] = [
             {
                 "date": op.operation.created_at,
@@ -119,7 +114,7 @@ class DashboardView(RoleRequiredMixin, TemplateView):
                 "product": op.product.name,
                 "quantity": op.quantity,
             }
-            for op in recent_ops
+            for op in get_recent_operations(6)
         ]
         context["low_stock_products"] = get_low_stock_products(10, 10)
         context["notifications"] = Notification.objects.all()[:5]
@@ -332,28 +327,19 @@ class ReceiptView(RoleRequiredMixin, View):
 
         elif "save_receipt" in request.POST:
             if receipt_cart:
-                with transaction.atomic():
-                    operation = StockOperation.objects.create(
-                        operation_type=OPERATION_CHOICES.RECEIPT,
-                        created_by=request.user,
-                        reason=request.POST.get("reason", ""),
-                    )
-                    for item in receipt_cart:
-                        product = get_object_or_404(Product, id=item["product_id"])
-                        quantity = Decimal(item["quantity"])
-                        StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
-                        product.quantity += quantity
-                        product.save()
-                    items = StockOperationItem.objects.filter(operation=operation)
-                    for item in items:
-                        qty = int(item.quantity) if item.quantity == int(item.quantity) else f"{item.quantity:.2f}"
-                        Notification.objects.create(
-                            type=2,
-                            message=f"Прийом товару: {item.product.name} — {qty} {item.product.get_unit_display()}",
-                            user=request.user
-                        )
+                ok, err, _ = process_stock_operation(
+                    receipt_cart,
+                    request.user,
+                    OPERATION_CHOICES.RECEIPT,
+                    reason=request.POST.get("reason", ""),
+                    notification_type=2,
+                    increase=True,
+                )
+                if not ok:
+                    messages.error(request, err)
+                else:
+                    messages.success(request, "Прийом товарів збережено.")
                 request.session["receipt_cart"] = []
-                messages.success(request, "Прийом товарів збережено.")
                 return redirect("wms:receipt_list")
             else:
                 messages.warning(request, "Список порожній.")
@@ -372,11 +358,8 @@ class ProductCreateView(RoleRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        Notification.objects.create(
-            type=1,
-            message=f"Новий товар додано: {self.object.name}",
-            user=self.request.user
-        )
+        logger.info(f"Product created: {form.instance.name} by user {self.request.user}")
+        Notification.objects.create(type=1, message=f"Новий товар додано: {self.object.name}", user=self.request.user)
         return response
 
 
@@ -432,89 +415,60 @@ class ProductReportView(RoleRequiredMixin, ListView):
         return super().render_to_response(context, **response_kwargs)
 
     def export_to_excel(self, queryset):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Products"
-
-        ws.append(["Категорія", "Штрихкод", "Кількість", "Одиниця", "Ціна закупки", "Ціна продажу", "Дата створення"])
-
-        for p in queryset:
-            ws.append([
-                p.category.name if p.category else "-",
-                p.barcode or "-",
-                float(p.quantity),
-                p.get_unit_display() if hasattr(p, 'get_unit_display') else getattr(p, 'unit', ''),
-                float(p.purchase_price.amount) if p.purchase_price else "-",
-                float(p.selling_price.amount) if p.selling_price else "-",
-                p.created_at.strftime("%d.%m.%Y") if p.created_at else "",
-            ])
-
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        response["Content-Disposition"] = "attachment; filename=products_report.xlsx"
-        wb.save(response)
-        return response
+        try:
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Products"
+            ws.append(
+                ["Категорія", "Штрихкод", "Кількість", "Одиниця", "Ціна закупки", "Ціна продажу", "Дата створення"]
+            )
+            for p in queryset:
+                ws.append(
+                    [
+                        p.category.name if p.category else "-",
+                        p.barcode or "-",
+                        float(p.quantity),
+                        p.get_unit_display() if hasattr(p, "get_unit_display") else getattr(p, "unit", ""),
+                        float(p.purchase_price.amount) if p.purchase_price else "-",
+                        float(p.selling_price.amount) if p.selling_price else "-",
+                        p.created_at.strftime("%d.%m.%Y") if p.created_at else "",
+                    ]
+                )
+            response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response["Content-Disposition"] = "attachment; filename=products_report.xlsx"
+            wb.save(response)
+            logger.info(f"Products exported to Excel by user {self.request.user}")
+            return response
+        except Exception as e:
+            logger.error(f"Export to Excel failed: {e}")
+            messages.error(self.request, "Помилка експорту у Excel.")
+            return redirect("wms:product_report")
 
     def export_to_pdf(self, queryset):
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib import colors
-        from reportlab.lib.styles import getSampleStyleSheet
-        from io import BytesIO
-        from pathlib import Path
-        font_path = str(Path(__file__).resolve().parent.parent / 'static' / 'fonts' / 'DejaVuSans.ttf')
-        if not os.path.exists(font_path):
-            font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
-        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
-
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30, bottomMargin=20)
-        styles = getSampleStyleSheet()
-        styleN = styles['Normal']
-        styleN.fontName = 'DejaVuSans'
-        styleH = styles['Heading2']
-        styleH.fontName = 'DejaVuSans'
-
-        data = [[
-            'Категорія',
-            'Штрихкод',
-            'Кількість',
-            'Одиниця',
-            'Ціна закупки',
-            'Ціна продажу',
-            'Дата створення',
-        ]]
+        data = [
+            [
+                "Категорія",
+                "Штрихкод",
+                "Кількість",
+                "Одиниця",
+                "Ціна закупки",
+                "Ціна продажу",
+                "Дата створення",
+            ]
+        ]
         for p in queryset:
-            data.append([
-                p.category.name if p.category else "-",
-                p.barcode or "-",
-                float(p.quantity),
-                p.get_unit_display() if hasattr(p, 'get_unit_display') else getattr(p, 'unit', ''),
-                float(p.purchase_price.amount) if p.purchase_price else "-",
-                float(p.selling_price.amount) if p.selling_price else "-",
-                p.created_at.strftime("%d.%m.%Y") if p.created_at else "",
-            ])
-
-        table = Table(data, colWidths=[100, 120, 80, 60, 80, 80, 100])
-        table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey]),
-        ]))
-
-        elements = [Paragraph('Звіт по товарах', styleH), Spacer(1, 12), table]
-        doc.build(elements)
-        pdf = buffer.getvalue()
-        buffer.close()
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = "attachment; filename=products_report.pdf"
-        response.write(pdf)
-        return response
+            data.append(
+                [
+                    p.category.name if p.category else "-",
+                    p.barcode or "-",
+                    float(p.quantity),
+                    p.get_unit_display() if hasattr(p, "get_unit_display") else getattr(p, "unit", ""),
+                    float(p.purchase_price.amount) if p.purchase_price else "-",
+                    float(p.selling_price.amount) if p.selling_price else "-",
+                    p.created_at.strftime("%d.%m.%Y") if p.created_at else "",
+                ]
+            )
+        return export_table_to_pdf(data, "Звіт по товарах", [100, 120, 80, 60, 80, 80, 100], "products_report.pdf")
 
 
 @method_decorator(login_required, name="dispatch")
@@ -587,29 +541,33 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
             if op.created_by and op.created_by.get_full_name():
                 names = op.created_by.get_full_name().split()
                 if len(names) > 1:
-                    user_str = f"{names[-1]} {''.join([n[0]+'.' for n in names[:-1]])}"
+                    user_str = f"{names[-1]} {''.join([n[0] + '.' for n in names[:-1]])}"
                 else:
                     user_str = names[0]
             elif op.created_by and op.created_by.last_name:
-                user_str = f"{op.created_by.last_name} {op.created_by.first_name[0]}." if op.created_by.first_name else op.created_by.last_name
+                user_str = (
+                    f"{op.created_by.last_name} {op.created_by.first_name[0]}."
+                    if op.created_by.first_name
+                    else op.created_by.last_name
+                )
             elif op.created_by and op.created_by.username:
                 user_str = op.created_by.username
             else:
-                user_str = '-'
-            reason = (op.reason or '-')
+                user_str = "-"
+            reason = op.reason or "-"
             if len(reason) > 13:
-                reason = reason[:13] + '…'
-            barcodes = ", ".join([
-                str(item.product.barcode) for item in op.items.all()
-            ])
-            date_str = op.created_at.strftime('%d.%m %H:%M')
-            ws.append([
-                op.get_operation_type_display(),
-                user_str,
-                reason,
-                barcodes,
-                date_str,
-            ])
+                reason = reason[:13] + "…"
+            barcodes = ", ".join([str(item.product.barcode) for item in op.items.all()])
+            date_str = op.created_at.strftime("%d.%m %H:%M")
+            ws.append(
+                [
+                    op.get_operation_type_display(),
+                    user_str,
+                    reason,
+                    barcodes,
+                    date_str,
+                ]
+            )
 
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         response["Content-Disposition"] = "attachment; filename=stock_operations_report.xlsx"
@@ -617,85 +575,49 @@ class StockOperationReportView(RoleRequiredMixin, ListView):
         return response
 
     def export_to_pdf(self, queryset):
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib import colors
-        from reportlab.lib.styles import getSampleStyleSheet
-        from io import BytesIO
-        from pathlib import Path
-        font_path = str(Path(__file__).resolve().parent.parent / 'static' / 'fonts' / 'DejaVuSans.ttf')
-        if not os.path.exists(font_path):
-            font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
-        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
-
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=30, bottomMargin=20)
-        styles = getSampleStyleSheet()
-        styleN = styles['Normal']
-        styleN.fontName = 'DejaVuSans'
-        styleH = styles['Heading2']
-        styleH.fontName = 'DejaVuSans'
-
-        data = [[
-            'Тип операції',
-            'Користувач',
-            'Причина',
-            'Штрихкод',
-            'Дата',
-        ]]
+        data = [
+            [
+                "Тип операції",
+                "Користувач",
+                "Причина",
+                "Штрихкод",
+                "Дата",
+            ]
+        ]
         for op in queryset:
-            # Користувач: фамилия и инициалы
             if op.created_by and op.created_by.get_full_name():
                 names = op.created_by.get_full_name().split()
                 if len(names) > 1:
-                    user_str = f"{names[-1]} {''.join([n[0]+'.' for n in names[:-1]])}"
+                    user_str = f"{names[-1]} {''.join([n[0] + '.' for n in names[:-1]])}"
                 else:
                     user_str = names[0]
             elif op.created_by and op.created_by.last_name:
-                user_str = f"{op.created_by.last_name} {op.created_by.first_name[0]}." if op.created_by.first_name else op.created_by.last_name
+                user_str = (
+                    f"{op.created_by.last_name} {op.created_by.first_name[0]}."
+                    if op.created_by.first_name
+                    else op.created_by.last_name
+                )
             elif op.created_by and op.created_by.username:
                 user_str = op.created_by.username
             else:
-                user_str = '-'
-            # Причина: максимум 13 символов
-            reason = (op.reason or '-')
+                user_str = "-"
+            reason = op.reason or "-"
             if len(reason) > 13:
-                reason = reason[:13] + '…'
-            # Штрихкоды всех товаров через запятую
-            barcodes = ", ".join([
-                str(item.product.barcode) for item in op.items.all()
-            ])
-            # Дата: только день, месяц, часы:минуты
-            date_str = op.created_at.strftime('%d.%m %H:%M')
-            data.append([
-                op.get_operation_type_display(),
-                user_str,
-                reason,
-                barcodes,
-                date_str,
-            ])
-
-        table = Table(data, colWidths=[80, 100, 100, 150, 80])
-        table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey]),
-        ]))
-
-        elements = [Paragraph('Звіт по операціях на складі', styleH), Spacer(1, 12), table]
-        doc.build(elements)
-        pdf = buffer.getvalue()
-        buffer.close()
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = "attachment; filename=stock_operations_report.pdf"
-        response.write(pdf)
-        return response
+                reason = reason[:13] + "…"
+            barcodes = ", ".join([str(item.product.barcode) for item in op.items.all()])
+            date_str = op.created_at.strftime("%d.%m %H:%M")
+            data.append(
+                [
+                    op.get_operation_type_display(),
+                    user_str,
+                    reason,
+                    barcodes,
+                    date_str,
+                ]
+            )
+        return export_table_to_pdf(
+            data, "Звіт по операціях на складі", [80, 100, 100, 150, 80], "stock_operations_report.pdf"
+        )
 
 
 @method_decorator(login_required, name="dispatch")
@@ -766,33 +688,20 @@ class IssueView(RoleRequiredMixin, View):
 
         elif "save_issue" in request.POST:
             if issue_cart:
-                with transaction.atomic():
-                    operation = StockOperation.objects.create(
-                        operation_type=OPERATION_CHOICES.ISSUE,
-                        created_by=request.user,
-                        reason=request.POST.get("reason", ""),
-                        note=request.POST.get("note", ""),
-                    )
-                    for item in issue_cart:
-                        product = get_object_or_404(Product, id=item["product_id"])
-                        quantity = Decimal(item["quantity"])
-                        if product.quantity < quantity:
-                            messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
-                            return redirect("wms:issue_list")
-                        StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
-                        product.quantity -= quantity
-                        product.save()
-                    # Уведомление о выдаче
-                    items = StockOperationItem.objects.filter(operation=operation)
-                    for item in items:
-                        qty = int(item.quantity) if item.quantity == int(item.quantity) else f"{item.quantity:.2f}"
-                        Notification.objects.create(
-                            type=3,
-                            message=f"Видача товару: {item.product.name} — {qty} {item.product.get_unit_display()}",
-                            user=request.user
-                        )
+                ok, err, _ = process_stock_operation(
+                    issue_cart,
+                    request.user,
+                    OPERATION_CHOICES.ISSUE,
+                    reason=request.POST.get("reason", ""),
+                    note=request.POST.get("note", ""),
+                    notification_type=3,
+                    increase=False,
+                )
+                if not ok:
+                    messages.error(request, err)
+                else:
+                    messages.success(request, "Видачу товарів збережено")
                 request.session["issue_cart"] = []
-                messages.success(request, "Видачу товарів збережено")
                 return redirect("wms:issue_list")
             else:
                 messages.warning(request, "Список порожній")
@@ -809,6 +718,11 @@ class ProductUpdateView(RoleRequiredMixin, UpdateView):
     template_name = "wms/product_form.html"
     success_url = reverse_lazy("wms:product_list")
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        logger.info(f"Product updated: {form.instance.name} by user {self.request.user}")
+        return response
+
 
 @method_decorator(login_required, name="dispatch")
 class ProductDeleteView(RoleRequiredMixin, DeleteView):
@@ -819,6 +733,7 @@ class ProductDeleteView(RoleRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         product = self.get_object()
+        logger.info(f"Product deleted: {product.name} by user {request.user}")
         messages.success(request, f"Товар '{product.name}' успішно видалено.")
         return super().delete(request, *args, **kwargs)
 
@@ -891,33 +806,20 @@ class WriteOffView(RoleRequiredMixin, View):
 
         elif "save_writeoff" in request.POST:
             if writeoff_cart:
-                with transaction.atomic():
-                    operation = StockOperation.objects.create(
-                        operation_type=OPERATION_CHOICES.WRITE_OFF,
-                        created_by=request.user,
-                        reason=request.POST.get("reason", ""),
-                        note=request.POST.get("note", ""),
-                    )
-                    for item in writeoff_cart:
-                        product = get_object_or_404(Product, id=item["product_id"])
-                        quantity = Decimal(item["quantity"])
-                        if product.quantity < quantity:
-                            messages.error(request, f"Недостатньо товару на складі. Доступно: {product.quantity}")
-                            return redirect("wms:writeoff_list")
-                        StockOperationItem.objects.create(operation=operation, product=product, quantity=quantity)
-                        product.quantity -= quantity
-                        product.save()
-                    # Уведомление о списании
-                    items = StockOperationItem.objects.filter(operation=operation)
-                    for item in items:
-                        qty = int(item.quantity) if item.quantity == int(item.quantity) else f"{item.quantity:.2f}"
-                        Notification.objects.create(
-                            type=4,
-                            message=f"Списання: {item.product.name} — {qty} {item.product.get_unit_display()}",
-                            user=request.user
-                        )
+                ok, err, _ = process_stock_operation(
+                    writeoff_cart,
+                    request.user,
+                    OPERATION_CHOICES.WRITE_OFF,
+                    reason=request.POST.get("reason", ""),
+                    note=request.POST.get("note", ""),
+                    notification_type=4,
+                    increase=False,
+                )
+                if not ok:
+                    messages.error(request, err)
+                else:
+                    messages.success(request, "Списання товарів збережено")
                 request.session["writeoff_cart"] = []
-                messages.success(request, "Списання товарів збережено")
                 return redirect("wms:writeoff_list")
             else:
                 messages.warning(request, "Список порожній")
@@ -1101,11 +1003,8 @@ def import_products(request):
             elif file.name.endswith((".xlsx", ".xls")):
                 df = pd.read_excel(file)
             else:
-                print("import_products: unsupported file format")
-                messages.error(
-                    request,
-                    "Непідтримуваний формат файлу. Використовуйте CSV або Excel.",
-                )
+                logger.warning(f"User {request.user} tried to import unsupported file format: {file.name}")
+                messages.error(request, "Формат файлу не підтримується. Завантажте CSV або Excel.")
                 form = ImportProductsForm()
                 return render(request, "wms/import_products.html", {"form": form})
             required_columns = ["name", "quantity", "purchase_price"]
@@ -1118,9 +1017,9 @@ def import_products(request):
             for col in required_columns:
                 if col not in df.columns:
                     missing_columns.append(col)
-            print(f"import_products: missing_columns = {missing_columns}")
             if missing_columns:
-                messages.error(request, f'Відсутні обов\'язкові колонки: {", ".join(missing_columns)}')
+                logger.warning(f"User {request.user} tried to import file with missing columns: {missing_columns}")
+                messages.error(request, f"Відсутні обов'язкові колонки: {', '.join(missing_columns)}")
                 form = ImportProductsForm()
                 return render(request, "wms/import_products.html", {"form": form})
             if has_selling_price and not has_sale_price:
@@ -1128,13 +1027,17 @@ def import_products(request):
             request.session["import_data"] = df.to_dict("records")
             request.session["import_filename"] = file.name
             print("import_products: success, redirect")
-            return redirect("wms:preview_import_products")
+            logger.info(f"Products imported by user {request.user}")
+            success = True
+            return render(request, "wms/import_products.html", {"form": ImportProductsForm(), "success": success})
+        except pd.errors.ParserError:
+            logger.error(f"Import products failed: ParserError for user {request.user}")
+            messages.error(request, "Файл пошкоджений або має неправильний формат. Перевірте CSV/Excel файл.")
+            form = ImportProductsForm()
+            return render(request, "wms/import_products.html", {"form": form})
         except Exception as e:
-            import traceback
-
-            tb = traceback.format_exc()
-            print(f"import_products: exception: {e}\n{tb}")
-            messages.error(request, f"Помилка при обробці файлу: {str(e)}\n{tb}")
+            logger.error(f"Import products failed: {e}")
+            messages.error(request, "Сталася неочікувана помилка при імпорті. Зверніться до адміністратора.")
             form = ImportProductsForm()
             return render(request, "wms/import_products.html", {"form": form})
     else:
@@ -1205,18 +1108,24 @@ def preview_import_products(request):
 
 @manager_required
 def backup_products(request):
-    from django.core.serializers import serialize
+    try:
+        from django.core.serializers import serialize
 
-    products = Product.objects.filter(is_active=True)
-    data = serialize("json", products)
+        products = Product.objects.filter(is_active=True)
+        data = serialize("json", products)
 
-    response = HttpResponse(data, content_type="application/json")
-    response["Content-Disposition"] = (
-        f'attachment; filename="products_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
-    )
+        response = HttpResponse(data, content_type="application/json")
+        response["Content-Disposition"] = (
+            f'attachment; filename="products_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+        )
 
-    messages.success(request, "Резервна копія товарів створена успішно!")
-    return response
+        logger.info(f"Product backup created by user {request.user}")
+        messages.success(request, "Резервна копія товарів створена успішно!")
+        return response
+    except Exception as e:
+        logger.error(f"Product backup failed: {e}")
+        messages.error(request, f"Помилка створення резервної копії: {e}")
+        return redirect("wms:tools")
 
 
 @manager_required
@@ -1249,10 +1158,12 @@ def restore_products(request):
                     if created:
                         restored_count += 1
 
+            logger.info(f"Product restore completed by user {request.user}")
             messages.success(request, f"Відновлено {restored_count} товарів!")
-            return redirect("wms:product_list")
+            return redirect("wms:tools")
 
         except Exception as e:
+            logger.error(f"Product restore failed: {e}")
             messages.error(request, f"Помилка при відновленні: {str(e)}")
             return redirect("wms:tools")
 
@@ -1261,37 +1172,43 @@ def restore_products(request):
 
 @manager_required
 def backup_all_data(request):
-    from django.core.serializers import serialize
+    try:
+        from django.core.serializers import serialize
 
-    from accounts.models import Customer
+        from accounts.models import Customer
 
-    data = []
+        data = []
 
-    users = Customer.objects.all()
-    data.extend(serialize("python", users))
+        users = Customer.objects.all()
+        data.extend(serialize("python", users))
 
-    categories = Category.objects.all()
-    data.extend(serialize("python", categories))
+        categories = Category.objects.all()
+        data.extend(serialize("python", categories))
 
-    products = Product.objects.all()
-    data.extend(serialize("python", products))
+        products = Product.objects.all()
+        data.extend(serialize("python", products))
 
-    operations = StockOperation.objects.all()
-    data.extend(serialize("python", operations))
+        operations = StockOperation.objects.all()
+        data.extend(serialize("python", operations))
 
-    operation_items = StockOperationItem.objects.all()
-    data.extend(serialize("python", operation_items))
+        operation_items = StockOperationItem.objects.all()
+        data.extend(serialize("python", operation_items))
 
-    changes = ChangeLog.objects.all()
-    data.extend(serialize("python", changes))
+        changes = ChangeLog.objects.all()
+        data.extend(serialize("python", changes))
 
-    response = HttpResponse(json.dumps(data, indent=2), content_type="application/json")
-    response["Content-Disposition"] = (
-        f'attachment; filename="full_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
-    )
+        response = HttpResponse(json.dumps(data, indent=2, default=str), content_type="application/json")
+        response["Content-Disposition"] = (
+            f'attachment; filename="full_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+        )
 
-    messages.success(request, "Повна резервна копія створена успішно!")
-    return response
+        logger.info(f"Full backup created by user {request.user}")
+        messages.success(request, "Повна резервна копія створена успішно!")
+        return response
+    except Exception as e:
+        logger.error(f"Full backup failed: {e}")
+        messages.error(request, f"Помилка створення повної резервної копії: {e}")
+        return redirect("wms:tools")
 
 
 @manager_required
@@ -1348,11 +1265,17 @@ def restore_all_data(request):
                         restored_counts["changes"] += 1
 
             total_restored = sum(restored_counts.values())
+            logger.info(f"Full restore completed by user {request.user}")
             messages.success(request, f"Відновлено {total_restored} записів!")
             return redirect("wms:dashboard")
 
+        except json.JSONDecodeError:
+            logger.error(f"Full restore failed: JSONDecodeError for user {request.user}")
+            messages.error(request, "Файл резервної копії пошкоджений або має неправильний формат.")
+            return redirect("wms:tools")
         except Exception as e:
-            messages.error(request, f"Помилка при відновленні: {str(e)}")
+            logger.error(f"Full restore failed: {e}")
+            messages.error(request, "Сталася неочікувана помилка при відновленні. Зверніться до адміністратора.")
             return redirect("wms:tools")
 
     return render(request, "wms/restore_all_data.html")
@@ -1541,20 +1464,22 @@ class ChangeLogReportView(RoleRequiredMixin, TemplateView):
 class InventoryReportView(RoleRequiredMixin, TemplateView):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
     template_name = "wms/reports/inventory_report.html"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        inventories = Inventory.objects.prefetch_related('items__product', 'user').order_by('-date')
-        context['inventories'] = inventories
+        inventories = Inventory.objects.prefetch_related("items__product", "user").order_by("-date")
+        context["inventories"] = inventories
         return context
 
 
 class MinStockReportView(RoleRequiredMixin, TemplateView):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
     template_name = "wms/reports/min_stock_report.html"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        products = Product.objects.filter(quantity__lte=F('min_quantity')).select_related('category')
-        context['products'] = products
+        products = Product.objects.filter(quantity__lte=F("min_quantity")).select_related("category")
+        context["products"] = products
         return context
 
 
@@ -1566,6 +1491,7 @@ InventoryItemFormSet = modelformset_factory(
     can_delete=False,
 )
 
+
 class InventoryCreateView(RoleRequiredMixin, TemplateView):
     allowed_roles = [ROLE_CHOICES.MANAGER, ROLE_CHOICES.SELLER]
     template_name = "wms/inventory_create.html"
@@ -1573,9 +1499,7 @@ class InventoryCreateView(RoleRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         form = InventoryForm()
         products = Product.objects.all().select_related("category")
-        initial = [
-            {"product": p, "actual_quantity": p.quantity} for p in products
-        ]
+        initial = [{"product": p, "actual_quantity": p.quantity} for p in products]
         formset = InventoryItemFormSet(queryset=InventoryItem.objects.none(), initial=initial)
         return self.render_to_response({"form": form, "formset": formset, "products": products})
 

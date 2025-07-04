@@ -3,16 +3,17 @@ from django.urls import path
 from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        DashboardView, HelpFaqView, HelpOperationsView,
                        HelpProductsView, HelpReportsView, HelpToolsView,
-                       HelpView, IndexView, IssueView, ProductCreateView,
-                       ProductDeleteView, ProductListView, ProductReportView,
-                       ProductUpdateView, ReceiptView, ReportListView,
-                       StockOperationReportView, ToolsView, WriteOffView,
-                       backup_all_data, backup_products, barcode_generator,
-                       export_products_csv, export_products_excel,
-                       import_products, preview_import_products,
-                       preview_import_products_ajax, restore_all_data,
-                       restore_products, send_email_to_managers,
-                       InventoryReportView, MinStockReportView, InventoryCreateView)
+                       HelpView, IndexView, InventoryCreateView,
+                       InventoryReportView, IssueView, MinStockReportView,
+                       ProductCreateView, ProductDeleteView, ProductListView,
+                       ProductReportView, ProductUpdateView, ReceiptView,
+                       ReportListView, StockOperationReportView, ToolsView,
+                       WriteOffView, backup_all_data, backup_products,
+                       barcode_generator, export_products_csv,
+                       export_products_excel, import_products,
+                       preview_import_products, preview_import_products_ajax,
+                       restore_all_data, restore_products,
+                       send_email_to_managers)
 
 app_name = "wms"
 

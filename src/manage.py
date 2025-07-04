@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 import os
+import pathlib
 import subprocess
 import sys
+
 import environ
-import pathlib
 
 env = environ.Env()
-environ.Env.read_env(pathlib.Path(__file__).parent.parent / '.env')
+environ.Env.read_env(pathlib.Path(__file__).parent.parent / ".env")
+
 
 def main():
     if "DJANGO_SETTINGS_MODULE" not in os.environ:

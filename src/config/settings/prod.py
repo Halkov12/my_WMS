@@ -1,11 +1,12 @@
 import os
-from config.settings.base import *
 
-SECRET_KEY = env("SECRET_KEY")
+from config.settings.base import *  # NOQA:F403
 
-DEBUG = env.bool("DEBUG", default=False)
+SECRET_KEY = env("SECRET_KEY")  # NOQA:F405
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+DEBUG = env.bool("DEBUG", default=False)  # NOQA:F405
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])  # NOQA:F405
 
 ROOT_URLCONF = "config.urls"
 
@@ -28,4 +29,3 @@ MEDIA_URL = "/media/"
 
 if not DEBUG:
     MEDIA_URL = "http://localhost/media/"
-

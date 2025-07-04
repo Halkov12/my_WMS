@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load space_thousands %}
 
 {% block title %}Дашборд{% endblock %}
 
@@ -51,7 +52,17 @@
   <div class="col-md-12 col-lg-12 mt-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
-        <div class="display-4 text-info mb-2">{{ total_stock_value|floatformat:0 }} <span class="fs-5">грн</span></div>
+        <div class="display-4 text-info mb-2 d-flex align-items-center justify-content-center">
+          <span>
+            {{ total_stock_value|floatformat:0|space_thousands }}
+            <span class="fs-3 ms-2">грн</span>
+          </span>
+          <span class="text-white fs-4 mx-3 align-baseline">або</span>
+          <span class="text-success">
+            {{ total_stock_value_usd|space_thousands }}
+            <span class="fs-3 ms-2">USD</span>
+          </span>
+        </div>
         <h5 class="card-title mb-0">Сума товарів на складі</h5>
       </div>
     </div>

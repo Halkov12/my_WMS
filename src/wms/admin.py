@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import (Category, ChangeLog, Product, StockOperation,
-                     StockOperationItem, Notification)
+from .models import (Category, ChangeLog, Notification, Product,
+                     StockOperation, StockOperationItem)
 
 
 @admin.register(Product)
