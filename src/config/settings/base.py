@@ -1,3 +1,5 @@
+import os
+
 from datetime import timedelta
 from pathlib import Path
 
@@ -7,6 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
+
+log_dir = BASE_DIR / "LOGS"
+os.makedirs(log_dir, exist_ok=True)
 
 INSTALLED_APPS = [
     "jazzmin",
