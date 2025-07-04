@@ -71,7 +71,7 @@ A modern warehouse management system built with Django, Bootstrap 5, and interac
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/Halkov12/my_WMS.git
 cd my_WMS
 ```
 
