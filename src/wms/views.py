@@ -1290,7 +1290,7 @@ class HelpView(TemplateView):
             {
                 "title": "Головна",
                 "icon": "bi-house",
-                "description": "Загальний огляд системи WMS",
+                "description": "Загальний огляд системи PackPilot",
                 "url": "wms:help_main",
             },
             {

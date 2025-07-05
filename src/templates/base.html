@@ -9,66 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
-    <style>
-        body { background: #f8fafc; min-height: 100vh; }
-        .main-content { min-height: 70vh; }
-        .card, .table, .toast, .modal-content { transition: box-shadow .3s, background .3s, color .3s; }
-        .card:hover { box-shadow: 0 8px 32px rgba(80,80,160,0.10), 0 1.5px 4px rgba(0,0,0,0.04); }
-        .btn, .nav-link { transition: background .2s, color .2s, box-shadow .2s, border .2s; }
-        .btn:active, .nav-link:active { transform: scale(0.97); }
-        :root {
-          --main-bg: #f8fafc;
-          --main-text: #222;
-          --card-bg: #fff;
-          --card-border: #e0e7ef;
-          --primary: #4e54c8;
-          --secondary: #8f94fb;
-          --header-bg: #fff;
-          --footer-bg: #fff;
-          --header-text: #222;
-          --footer-text: #888;
-        }
-        .theme-dark {
-          --main-bg: #181a1b;
-          --main-text: #f1f1f1;
-          --card-bg: #23272b;
-          --card-border: #343a40;
-          --primary: #8f94fb;
-          --secondary: #4e54c8;
-          --header-bg: #23272b;
-          --footer-bg: #181a1b;
-          --header-text: #f1f1f1;
-          --footer-text: #aaa;
-        }
-        body, .main-content { background: var(--main-bg) !important; color: var(--main-text) !important; }
-        .card, .breadcrumb, .modal-content { background: var(--card-bg) !important; border-color: var(--card-border) !important; color: var(--main-text) !important; }
-        .table, .table th, .table td { color: var(--main-text) !important; background: var(--card-bg) !important; }
-        /* Toast fix for dark */
-        .theme-dark .toast, .theme-dark .toast-body { background: #23272b !important; color: #f1f1f1 !important; border-color: #343a40 !important; }
-        .theme-dark .toast .btn-close { filter: invert(1); }
-        .theme-dark .table-striped > tbody > tr:nth-of-type(odd) { background-color: #23272b !important; }
-        .theme-dark .table-striped > tbody > tr:nth-of-type(even) { background-color: #181a1b !important; }
-        .theme-dark .form-control, .theme-dark .form-select { background: #23272b !important; color: #f1f1f1 !important; border-color: #343a40 !important; }
-        .theme-dark .form-control:focus, .theme-dark .form-select:focus { background: #23272b !important; color: #fff !important; border-color: #8f94fb !important; }
-        .theme-dark .btn-primary, .theme-dark .btn-success, .theme-dark .btn-danger, .theme-dark .btn-warning, .theme-dark .btn-info { color: #fff !important; }
-        /* Header & Footer dark mode */
-        .navbar, .navbar .dropdown-menu { background: var(--header-bg) !important; color: var(--header-text) !important; }
-        .navbar .nav-link, .navbar .navbar-brand, .navbar .dropdown-item { color: var(--header-text) !important; }
-        .navbar .nav-link.active, .navbar .nav-link:focus, .navbar .nav-link:hover { color: var(--primary) !important; }
-        .theme-dark .navbar, .theme-dark .navbar .dropdown-menu { background: var(--header-bg) !important; color: var(--header-text) !important; }
-        .theme-dark .navbar .nav-link, .theme-dark .navbar .navbar-brand, .theme-dark .navbar .dropdown-item { color: var(--header-text) !important; }
-        .theme-dark .navbar .nav-link.active, .theme-dark .navbar .nav-link:focus, .theme-dark .navbar .nav-link:hover { color: var(--primary) !important; }
-        footer { background: var(--footer-bg) !important; color: var(--footer-text) !important; }
-        .theme-dark footer { background: var(--footer-bg) !important; color: var(--footer-text) !important; }
-        footer a, .theme-dark footer a { color: var(--footer-text) !important; }
-        .table-sticky thead th {
-          position: sticky;
-          top: 0;
-          z-index: 2;
-          background: var(--card-bg) !important;
-          box-shadow: 0 2px 2px -1px rgba(0,0,0,0.04);
-        }
-    </style>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>

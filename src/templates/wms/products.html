@@ -238,6 +238,8 @@ function formatNumber(val) {
   return num % 1 === 0 ? num.toString() : num.toFixed(2);
 }
 
+const NO_PHOTO_URL = "{% static 'img/no-photo.png' %}";
+
 document.querySelectorAll('.btn-detail').forEach(btn => {
   btn.addEventListener('click', function(e) {
     e.preventDefault();
@@ -246,7 +248,7 @@ document.querySelectorAll('.btn-detail').forEach(btn => {
       .then(r=>r.json())
       .then(data=>{
         document.getElementById('detail-name').textContent = data.name;
-        document.getElementById('detail-photo').innerHTML = `<img src='${data.photo ? data.photo : "/static/img/no-photo.png"}' class='img-fluid rounded mb-2' style='max-width:100%; max-height:260px;'>`;
+        document.getElementById('detail-photo').innerHTML = `<img src='${data.photo ? data.photo : NO_PHOTO_URL}' class='img-fluid rounded mb-2' style='max-width:100%; max-height:260px;'>`;
         document.getElementById('detail-category').textContent = data.category_name || '-';
         document.getElementById('detail-barcode').textContent = data.barcode || '-';
         document.getElementById('detail-quantity').textContent = formatNumber(data.quantity);
@@ -304,36 +306,4 @@ document.querySelectorAll('.btn-detail').forEach(btn => {
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-tr.table-warning {
-  border: 2px solid #ffc107 !important;
-  background-color: #fffbe6 !important;
-}
-.nowrap {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 220px;
-  width: 220px;
-}
-.actions-cell {
-  white-space: normal !important;
-}
-.actions-cell .btn {
-  padding-top: 0.1rem;
-  padding-bottom: 0.1rem;
-  font-size: 0.85rem;
-  line-height: 1.1;
-}
-#detail-photo img {
-  max-width: 100%;
-  max-height: 260px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-</style>
 {% endblock %}

@@ -3,6 +3,7 @@ import random
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from faker import Faker
+from django.db import connection
 
 from wms.models import OPERATION_CHOICES, Category, Product, StockOperation
 
@@ -68,14 +69,21 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        # Очищаем только связанные с товарами и операциями данные, не трогая пользователей
         from wms.models import ChangeLog, StockOperationItem
+
+        if connection.vendor == 'sqlite':
+            with connection.cursor() as cursor:
+                cursor.execute('PRAGMA foreign_keys = OFF;')
 
         ChangeLog.objects.all().delete()
         StockOperationItem.objects.all().delete()
         StockOperation.objects.all().delete()
         Product.objects.all().delete()
         Category.objects.all().delete()
+
+        if connection.vendor == 'sqlite':
+            with connection.cursor() as cursor:
+                cursor.execute('PRAGMA foreign_keys = ON;')
 
         fake = Faker("uk_UA")
 
@@ -89,7 +97,6 @@ class Command(BaseCommand):
         for cat in categories:
             for _ in range(20):
                 name = random.choice(PRODUCT_NAMES)
-                # Генерируем уникальный штрихкод (13 цифр)
                 while True:
                     barcode = str(random.randint(10**12, 10**13 - 1))
                     if barcode not in used_barcodes:
@@ -98,7 +105,18 @@ class Command(BaseCommand):
                 selling_price = random.randint(1000, 100000)
                 purchase_price = random.randint(500, selling_price)
                 quantity = random.randint(1, 200)
-                description = fake.sentence(nb_words=8)
+                if cat.name == "Смартфони":
+                    description = f"Смартфон {name} з дисплеєм {random.choice(['6.1"', '6.5"', '6.7"'])}, {random.choice(['128 ГБ', '256 ГБ', '512 ГБ'])}, {random.choice(['чорний', 'білий', 'синій', 'фіолетовий', 'сріблястий'])}. Ідеально підходить для роботи та розваг."
+                elif cat.name == "Ноутбуки":
+                    description = f"Ноутбук {name} з процесором {random.choice(['Intel Core i7', 'Intel Core i5', 'AMD Ryzen 7', 'Apple M2'])}, {random.choice(['16 ГБ', '32 ГБ'])} ОЗП, SSD {random.choice(['512 ГБ', '1 ТБ'])}. Легкий та потужний для щоденних задач."
+                elif cat.name == "Аудіотехніка":
+                    description = f"Навушники/колонка {name} з якісним звуком, Bluetooth {random.choice(['5.0', '5.2'])}, автономність до {random.randint(20, 40)} годин. Чудово підходить для музики та дзвінків."
+                elif cat.name == "Побутова техніка":
+                    description = f"{name} — сучасна побутова техніка з енергоефективністю класу {random.choice(['A++', 'A+++', 'B'])}, зручне керування та стильний дизайн."
+                elif cat.name == "Гаджети":
+                    description = f"Гаджет {name} для розумного дому або особистого використання. Компактний, багатофункціональний, з гарантією {random.randint(12, 36)} міс."
+                else:
+                    description = fake.sentence(nb_words=12)
                 prod = Product.objects.create(
                     name=name,
                     barcode=barcode,
@@ -121,7 +139,7 @@ class Command(BaseCommand):
                 operation = StockOperation.objects.create(
                     operation_type=op_type,
                     created_by=user,
-                    reason=f"Демо операція {op_type.label}",
+                    reason=f"{op_type.label}",
                     note="Автоматично згенеровано",
                 )
                 StockOperationItem.objects.create(operation=operation, product=prod, quantity=random.randint(1, 50))

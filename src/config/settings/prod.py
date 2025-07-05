@@ -1,5 +1,3 @@
-import os
-
 from config.settings.base import *  # NOQA:F403
 
 SECRET_KEY = env("SECRET_KEY", default="some-very-secret-key")  # NOQA:F405
@@ -12,12 +10,8 @@ ROOT_URLCONF = "config.urls"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB"),
-        "USER": os.environ.get("POSTGRES_USER"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",  # NOQA:F405
     }
 }
 

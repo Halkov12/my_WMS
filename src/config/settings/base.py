@@ -1,5 +1,4 @@
 import os
-
 from datetime import timedelta
 from pathlib import Path
 
@@ -93,8 +92,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "src" / "static",
+    BASE_DIR / "static",
 ]
+
+STATIC_ROOT = BASE_DIR / "src" / "staticfiles"
+STATIC_URL = "/static/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -134,18 +136,26 @@ DJOSER = {
 LANGUAGE_CODE = "uk"
 
 JAZZMIN_SETTINGS = {
-    "site_title": "WMS Admin",
-    "site_header": "WMS — Складська система",
-    "site_brand": "WMS",
-    # "site_logo": "/static/img/logo.svg",
-    "welcome_sign": "Ласкаво просимо до WMS Admin!",
-    "copyright": "WMS",
-    "search_model": ["wms.Product", "accounts.Customer"],
+    "site_title": "PackPilot Admin",
+    "site_header": "PackPilot",
+    "site_brand": "PackPilot",
+    "site_logo": "/static/img/packpilot_logo.png",
+    "site_icon": "/static/img/favicon.png",
+    "welcome_sign": "Ласкаво просимо до PackPilot Admin!",
+    "copyright": "PackPilot",
+    "primary_color": "#4e54c8",
+    "secondary_color": "#8f94fb",
+    "accent": "#4e54c8",
+    "navbar": "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+    "navbar_text": "#fff",
+    "footer_background": "#f8fafc",
+    "footer_text": "#888",
+    "actions_sticky_top": True,
+    "related_modal_active": True,
     "show_sidebar": True,
     "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": ["wms", "accounts"],
+    "custom_css": "css/style.css",
+    "custom_js": None,
     "icons": {
         "wms.product": "bi bi-box-seam",
         "accounts.customer": "bi bi-person",
@@ -154,23 +164,15 @@ JAZZMIN_SETTINGS = {
         "wms.stockoperationitem": "bi bi-list-check",
         "wms.changelog": "bi bi-clock-history",
     },
+    "order_with_respect_to": ["wms", "accounts"],
+    "language_chooser": False,
+    "search_model": ["wms.Product", "accounts.Customer"],
     "custom_links": {
         "accounts": [{"name": "На сайт", "url": "/", "icon": "bi bi-house-door", "permissions": ["auth.view_user"]}],
     },
     "show_ui_builder": False,
-    # "site_icon": "/static/img/favicon.ico",
-    "primary_color": "#4e54c8",
-    "secondary_color": "#8f94fb",
-    "accent": "#4e54c8",
-    "navbar": "#4e54c8",
-    "navbar_text": "#fff",
-    "footer_background": "#f8fafc",
-    "footer_text": "#888",
-    "actions_sticky_top": True,
-    "related_modal_active": True,
-    "language_chooser": False,
-    "custom_css": None,
-    "custom_js": None,
+    "hide_apps": ["auth", "common"],
+    "hide_models": ["auth.group", "auth.permission", "common.setting"],
 }
 
 LOGGING = {

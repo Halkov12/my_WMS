@@ -1,4 +1,4 @@
-# Warehouse Management System (WMS)
+# Warehouse Management System (PackPilot)
 
 A modern warehouse management system built with Django, Bootstrap 5, and interactive components.
 
@@ -223,7 +223,7 @@ my_WMS/
 │   ├── common/             # Shared models and utilities
 │   ├── config/             # Django settings
 │   ├── templates/          # HTML templates
-│   └── wms/                # Main WMS logic
+│   └── wms/                # Main PackPilot logic
 ├── docs/                   # Documentation
 ├── nginx/                  # Nginx configuration
 ├── commands/               # Run scripts
