@@ -1,0 +1,28 @@
+{% if messages %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  {% for message in messages %}
+    (function(){
+      let toast = document.createElement('div');
+      toast.className = 'toast align-items-center text-bg-{{ message.tags }} border-0 mb-2 fade-in';
+      toast.setAttribute('role','alert');
+      toast.setAttribute('aria-live','assertive');
+      toast.setAttribute('aria-atomic','true');
+      toast.innerHTML = `<div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2">
+          {% if message.tags == 'success' %}<i class='bi bi-check-circle-fill text-success fs-5'></i>{% endif %}
+          {% if message.tags == 'error' or message.tags == 'danger' %}<i class='bi bi-x-circle-fill text-danger fs-5'></i>{% endif %}
+          {% if message.tags == 'info' %}<i class='bi bi-info-circle-fill text-info fs-5'></i>{% endif %}
+          {% if message.tags == 'warning' %}<i class='bi bi-exclamation-triangle-fill text-warning fs-5'></i>{% endif %}
+          <span>{{ message }}</span>
+        </div>
+        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Закрити'></button>
+      </div>`;
+      document.getElementById('toast-container').appendChild(toast);
+      let t = new bootstrap.Toast(toast, {delay: 4000});
+      t.show();
+    })();
+  {% endfor %}
+});
+</script>
+{% endif %} 

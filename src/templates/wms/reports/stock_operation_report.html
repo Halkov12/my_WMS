@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Звіт по операціях{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по операціях</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard-data"></i> Звіт по операціях зі складом</h4>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end mb-4">
+        <div class="col-md-2">
+          <label class="form-label">Дата від</label>
+          <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Дата до</label>
+          <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Тип операції</label>
+          <select name="operation_type" class="form-select">
+            <option value="">Всі типи операцій</option>
+            {% for val, label in operation_choices %}
+              <option value="{{ val }}" {% if operation_type == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Сортування</label>
+          <select name="sort" class="form-select">
+            <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Дата (новіші спочатку)</option>
+            <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Дата (старіші спочатку)</option>
+            <option value="operation_type" {% if sort == 'operation_type' %}selected{% endif %}>Тип операції</option>
+            <option value="-operation_type" {% if sort == '-operation_type' %}selected{% endif %}>Тип операції (зворотнє)</option>
+            <option value="created_by" {% if sort == 'created_by' %}selected{% endif %}>Користувач</option>
+            <option value="-created_by" {% if sort == '-created_by' %}selected{% endif %}>Користувач (зворотнє)</option>
+          </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2 justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search"></i> Фільтрувати
+          </button>
+          <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={{ sort }}" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-excel"></i> Excel
+          </a>
+          <a href="?export=pdf&date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={{ sort }}" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf"></i> PDF
+          </a>
+        </div>
+      </form>
+      
+      {% if operations %}
+      <div class="mb-3">
+        <span class="text-muted">Знайдено: <strong>{{ operations.count }}</strong> операцій</span>
+      </div>
+      {% endif %}
+      
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center table-sticky">
+          <thead class="table-light">
+            <tr>
+              <th>
+                <a href="?date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={% if sort == 'operation_type' %}-operation_type{% else %}operation_type{% endif %}" class="text-decoration-none text-dark">
+                  Тип операції
+                  {% if sort == 'operation_type' %}<i class="bi bi-arrow-up"></i>{% elif sort == '-operation_type' %}<i class="bi bi-arrow-down"></i>{% endif %}
+                </a>
+              </th>
+              <th>
+                <a href="?date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={% if sort == 'created_by' %}-created_by{% else %}created_by{% endif %}" class="text-decoration-none text-dark">
+                  Користувач
+                  {% if sort == 'created_by' %}<i class="bi bi-arrow-up"></i>{% elif sort == '-created_by' %}<i class="bi bi-arrow-down"></i>{% endif %}
+                </a>
+              </th>
+              <th>Причина</th>
+              <th>Примітка</th>
+              <th>Товари</th>
+              <th>
+                <a href="?date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}" class="text-decoration-none text-dark">
+                  Дата
+                  {% if sort == 'created_at' %}<i class="bi bi-arrow-up"></i>{% elif sort == '-created_at' %}<i class="bi bi-arrow-down"></i>{% endif %}
+                </a>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for op in operations %}
+            <tr>
+              <td>
+                <span class="badge {% if op.operation_type == 1 %}bg-success{% elif op.operation_type == 2 %}bg-warning{% else %}bg-danger{% endif %}">
+                  {{ op.get_operation_type_display }}
+                </span>
+              </td>
+              <td>
+                {% if op.created_by.get_full_name %}
+                  {{ op.created_by.get_full_name }}
+                {% elif op.created_by.username %}
+                  {{ op.created_by.username }}
+                {% elif op.created_by.email %}
+                  {{ op.created_by.email }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>{{ op.reason|default:"-" }}</td>
+              <td>{{ op.note|default:"-" }}</td>
+              <td>
+                {% for item in op.items.all %}
+                  <div class="small">
+                    {{ item.product.name }} 
+                    <span class="badge {% if op.operation_type == 1 %}bg-success{% elif op.operation_type == 2 %}bg-warning{% else %}bg-danger{% endif %}">
+                      {{ item.quantity }}
+                    </span>
+                  </div>
+                {% endfor %}
+              </td>
+              <td>{{ op.created_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">
+                <div class="py-4">
+                  <i class="bi bi-search display-4 text-muted"></i>
+                  <p class="text-muted mt-2">Операцій не знайдено за вказаними критеріями.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if is_paginated %}
+      <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={{ sort }}">«</a>
+            </li>
+          {% endif %}
+          {% for num in paginator.page_range %}
+            {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}&date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={{ sort }}">{{ num }}</a>
+            </li>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}&operation_type={{ operation_type }}&sort={{ sort }}">»</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

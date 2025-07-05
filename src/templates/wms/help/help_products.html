@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - Товари{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Товари</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-box-seam"></i> Управління товарами
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-list-ul"></i> Перегляд товарів</h4>
+        <p>На сторінці "Товари" ви можете:</p>
+        <ul>
+          <li>Переглядати всі товари в системі</li>
+          <li>Шукати товари за назвою або штрихкодом</li>
+          <li>Фільтрувати товари за категорією</li>
+          <li>Бачити загальну статистику (кількість, вартість)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-plus-circle"></i> Створення товару</h4>
+        <p>Для створення нового товару:</p>
+        <ol>
+          <li>Перейдіть до розділу "Прийом"</li>
+          <li>Натисніть "Створити новий товар"</li>
+          <li>Заповніть обов'язкові поля:
+            <ul>
+              <li><strong>Назва товару</strong> — обов'язкове поле</li>
+              <li><strong>Кількість</strong> — початкова кількість на складі</li>
+              <li><strong>Категорія</strong> — для організації товарів</li>
+              <li><strong>Штрихкод</strong> — унікальний ідентифікатор</li>
+              <li><strong>Ціни</strong> — закупівельна та продажна</li>
+              <li><strong>Фото</strong> — зображення товару</li>
+            </ul>
+          </li>
+          <li>Натисніть "Створити товар"</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-pencil"></i> Редагування товару</h4>
+        <p>Для редагування товару:</p>
+        <ol>
+          <li>Знайдіть товар у списку</li>
+          <li>Натисніть на назву товару або кнопку "Редагувати"</li>
+          <li>Внесіть необхідні зміни</li>
+          <li>Збережіть зміни</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h4><i class="bi bi-tags"></i> Категорії товарів</h4>
+        <p>Категорії допомагають організувати товари:</p>
+        <ul>
+          <li>Створюйте категорії для групування товарів</li>
+          <li>Використовуйте категорії для фільтрації</li>
+          <li>Категорії відображаються в звітах</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Поради</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Використовуйте унікальні штрихкоди</li>
+          <li class="mb-2">✅ Додавайте фото товарів</li>
+          <li class="mb-2">✅ Правильно вказуйте одиниці виміру</li>
+          <li class="mb-2">✅ Регулярно оновлюйте ціни</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-exclamation-triangle"></i> Важливо</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">⚠️ Назва товару є обов'язковою</li>
+          <li class="mb-2">⚠️ Кількість не може бути від'ємною</li>
+          <li class="mb-2">⚠️ Штрихкод повинен бути унікальним</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

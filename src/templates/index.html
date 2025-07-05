@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Ласкаво просимо{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+  
+  <div class="container">
+    <div class="hero-content">
+      <h1 class="hero-title">
+                        <i class="bi bi-box-seam"></i> PackPilot
+      </h1>
+      <p class="hero-subtitle">Сучасна система управління складом для вашого бізнесу</p>
+      
+      {% if user.is_authenticated %}
+        <div class="welcome-message">
+          <div class="user-avatar">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          <h3>Вітаємо, {{ user.get_full_name|default:user.email }}!</h3>
+          <p>Готові почати роботу з системою управління складом?</p>
+        </div>
+        <div class="hero-buttons">
+          <a href="{% url 'wms:dashboard' %}" class="btn btn-hero btn-primary">
+            <i class="bi bi-play-circle"></i> Почати роботу
+          </a>
+        </div>
+      {% else %}
+        <div class="hero-buttons">
+          <a href="{% url 'accounts:login' %}" class="btn btn-hero btn-primary me-3">
+            <i class="bi bi-box-arrow-in-right"></i> Вхід
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-hero btn-outline-light">
+            <i class="bi bi-person-plus"></i> Реєстрація
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <div class="row text-center mb-5">
+      <div class="col-12">
+        <h2 class="display-4 fw-bold mb-3">Можливості системи</h2>
+        <p class="lead text-muted">Все необхідне для ефективного управління складом</p>
+      </div>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h3 class="feature-title">Управління товарами</h3>
+          <p class="feature-text">Додавання, редагування та відстеження товарів з детальною інформацією та зображеннями</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-arrow-left-right"></i>
+          </div>
+          <h3 class="feature-title">Складські операції</h3>
+          <p class="feature-text">Прийом, видача та списання товарів з автоматичним оновленням залишків</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-graph-up"></i>
+          </div>
+          <h3 class="feature-title">Звіти та аналітика</h3>
+          <p class="feature-text">Детальні звіти по товарах, операціях та змінах у системі</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-tools"></i>
+          </div>
+          <h3 class="feature-title">Інструменти</h3>
+          <p class="feature-text">Імпорт/експорт даних, резервне копіювання та генератор штрихкодів</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h3 class="feature-title">Безпека</h3>
+          <p class="feature-text">Рольова система доступу та журнал змін для відстеження дій</p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <h3 class="feature-title">Команда</h3>
+          <p class="feature-text">Управління користувачами з різними ролями та правами доступу</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Надійність</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Доступність</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Рівні доступу</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <div class="stat-number">∞</div>
+          <div class="stat-label">Можливості</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

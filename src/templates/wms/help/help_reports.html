@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - Звіти{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Звіти</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-clipboard-data"></i> Звіти та аналітика
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-box-seam"></i> Звіт по товарах</h4>
+        <p><strong>Призначення:</strong> Детальний звіт по всіх товарах на складі з інформацією про кількість, ціни та вартість.</p>
+        <h5>Що містить звіт:</h5>
+        <ul>
+          <li>Список всіх товарів</li>
+          <li>Кількість на складі</li>
+          <li>Закупівельна та продажна ціни</li>
+          <li>Загальна вартість товарів</li>
+          <li>Категорії товарів</li>
+          <li>Штрихкоди</li>
+        </ul>
+        <h5>Формати експорту:</h5>
+        <ul>
+          <li><strong>PDF</strong> — для друку та збереження</li>
+          <li><strong>Excel</strong> — для подальшого аналізу</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-arrow-left-right"></i> Звіт по операціях</h4>
+        <p><strong>Призначення:</strong> Аналіз руху товарів за певний період з деталізацією по типах операцій.</p>
+        <h5>Що містить звіт:</h5>
+        <ul>
+          <li>Всі операції за період (прийом, видача, списання)</li>
+          <li>Товари та кількості</li>
+          <li>Дата та час операцій</li>
+          <li>Користувачі, які виконали операції</li>
+          <li>Причини операцій</li>
+          <li>Фільтрація по типах операцій</li>
+        </ul>
+        <h5>Фільтри:</h5>
+        <ul>
+          <li>За періодом (дата початку — дата кінця)</li>
+          <li>За типом операції</li>
+          <li>За користувачем</li>
+          <li>За товаром</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h4><i class="bi bi-clock-history"></i> Звіт по змінах</h4>
+        <p><strong>Призначення:</strong> Історія всіх змін в системі для аудиту та відстеження дій користувачів.</p>
+        <h5>Що відстежується:</h5>
+        <ul>
+          <li>Створення нових товарів</li>
+          <li>Редагування товарів</li>
+          <li>Всі складські операції</li>
+          <li>Зміни в налаштуваннях</li>
+          <li>Користувач, який зробив зміну</li>
+          <li>Дата та час зміни</li>
+        </ul>
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Цей звіт допомагає відстежувати хто і коли вніс зміни в систему.
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h4><i class="bi bi-download"></i> Експорт звітів</h4>
+        <p>Всі звіти можна експортувати в різних форматах:</p>
+        <div class="row">
+          <div class="col-md-6">
+            <h5>PDF формат:</h5>
+            <ul>
+              <li>Готовий для друку</li>
+              <li>Професійне оформлення</li>
+              <li>Зручний для збереження</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h5>Excel формат:</h5>
+            <ul>
+              <li>Для подальшого аналізу</li>
+              <li>Можна редагувати</li>
+              <li>Зручний для обчислень</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Поради</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Регулярно генеруйте звіти</li>
+          <li class="mb-2">✅ Зберігайте важливі звіти</li>
+          <li class="mb-2">✅ Використовуйте фільтри для точності</li>
+          <li class="mb-2">✅ Аналізуйте тренди</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-calendar"></i> Періодичність</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">📅 Щоденні звіти по операціях</li>
+          <li class="mb-2">📅 Щотижневі звіти по товарах</li>
+          <li class="mb-2">📅 Місячні звіти по змінах</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-shield-check"></i> Безпека</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">🔒 Доступ тільки для менеджерів</li>
+          <li class="mb-2">🔒 Всі звіти логуються</li>
+          <li class="mb-2">🔒 Дані захищені</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Звіт по товарах{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по товарах</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-box-seam"></i> Звіт по товарах</h2>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row align-items-end g-3 mb-4">
+        <div class="col-md-3">
+          <label for="date_from" class="form-label">Дата від</label>
+          <input type="date" name="date_from" id="date_from" value="{{ date_from }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="date_to" class="form-label">Дата до</label>
+          <input type="date" name="date_to" id="date_to" value="{{ date_to }}" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Фільтрувати</button>
+        </div>
+        <div class="col-md-3 d-flex flex-column gap-2">
+          <a href="?export=excel&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-success w-100"><i class="bi bi-file-earmark-excel"></i> Експорт Excel</a>
+          <a href="?export=pdf&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-danger w-100"><i class="bi bi-file-earmark-pdf"></i> Експорт PDF</a>
+        </div>
+      </form>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Назва</th>
+              <th>Категорія</th>
+              <th>Штрихкод</th>
+              <th>Кількість</th>
+              <th>Ціна закупки</th>
+              <th>Ціна продажу</th>
+              <th>Дата створення</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>{{ product.name }}</td>
+              <td>{{ product.category.name|default:"-" }}</td>
+              <td>{{ product.barcode|default:"-" }}</td>
+              <td>{{ product.quantity }} {{ product.unit }}</td>
+              <td>{{ product.purchase_price|default:"-" }}</td>
+              <td>{{ product.selling_price|default:"-" }}</td>
+              <td>{{ product.created_at|date:"d.m.Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center">Товарів не знайдено.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if is_paginated %}
+      <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}">«</a>
+            </li>
+          {% endif %}
+          {% for num in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}&date_from={{ date_from }}&date_to={{ date_to }}">{{ num }}</a>
+            </li>
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}">»</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Skeleton loader для деталки (приклад для AJAX)
+function showSkeletonRows(count=6) {
+  const tbody = document.getElementById('products-tbody');
+  tbody.innerHTML = '';
+  for(let i=0;i<count;i++) {
+    tbody.innerHTML += `<tr class='skeleton-table-row'>
+      <td class='skeleton-table-cell'></td>
+      <td class='skeleton-table-cell'></td>
+      <td class='skeleton-table-cell'></td>
+      <td class='skeleton-table-cell'></td>
+      <td class='skeleton-table-cell'></td>
+    </tr>`;
+  }
+}
+// showSkeletonRows(); // Розкоментуйте для тесту
+</script>
+{% endblock %}

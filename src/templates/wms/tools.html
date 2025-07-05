@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Інструменти{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-tools"></i> Інструменти та утиліти
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Генератор штрихкодів - доступен всем -->
+  {% include "wms/tools/_tool_card.html" with icon="bi-upc-scan text-primary" title="Генератор штрихкодів" desc="Створення штрихкодів у форматі Code 128 для маркування товарів." btn_html='<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">Згенерувати штрихкод</button>' %}
+
+  <!-- Довідка - доступна всем -->
+  {% url 'wms:help_main' as help_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-question-circle text-info" title="Довідка" desc="Детальна документація по використанню системи та вирішенню проблем." btn_html='<a href="'|add:help_url|add:'" class="btn btn-outline-info">Переглянути довідку</a>' %}
+
+  {% if user.role == 1 %}  <!-- Только для менеджеров (ROLE_CHOICES.MANAGER = 1) -->
+  <!-- Експорт товарів - только для менеджеров -->
+  {% url 'wms:export_products_csv' as export_csv_url %}
+  {% url 'wms:export_products_excel' as export_excel_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-download text-success" title="Експорт товарів" desc="Вивантаження даних про товари в файли CSV або Excel для збереження або передачі." btn_html='<div class="dropdown"><button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Експортувати</button><ul class="dropdown-menu"><li><a class="dropdown-item" href="'|add:export_csv_url|add:'"><i class="bi bi-file-earmark-text"></i> CSV формат</a></li><li><a class="dropdown-item" href="'|add:export_excel_url|add:'"><i class="bi bi-file-earmark-excel"></i> Excel формат</a></li></ul></div>' %}
+
+  <!-- Імпорт товарів - только для менеджеров -->
+  {% url 'wms:import_products' as import_products_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-upload text-warning" title="Імпорт товарів" desc="Масове додавання товарів з файлів CSV або Excel з попереднім переглядом." btn_html='<a href="'|add:import_products_url|add:'" class="btn btn-outline-warning"><i class="bi bi-upload"></i> Імпортувати товари</a>' %}
+
+  <!-- Резервна копія товарів - только для менеджеров -->
+  {% url 'wms:backup_products' as backup_products_url %}
+  {% url 'wms:restore_products' as restore_products_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-cloud-upload text-secondary" title="Резервна копія товарів" desc="Створення резервної копії тільки товарів для захисту від втрати даних." btn_html='<div class="d-grid gap-2"><a href="'|add:backup_products_url|add:'" class="btn btn-outline-secondary"><i class="bi bi-download"></i> Створити резервну копію</a><a href="'|add:restore_products_url|add:'" class="btn btn-outline-secondary"><i class="bi bi-upload"></i> Відновити товари</a></div>' %}
+
+  <!-- Повна резервна копія - только для менеджеров -->
+  {% url 'wms:backup_all_data' as backup_all_data_url %}
+  {% url 'wms:restore_all_data' as restore_all_data_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-cloud-arrow-up text-danger" title="Повна резервна копія" desc="Створення повної резервної копії всіх даних системи включаючи користувачів та операції." btn_html='<div class="d-grid gap-2"><a href="'|add:backup_all_data_url|add:'" class="btn btn-outline-danger"><i class="bi bi-download"></i> Створити повну копію</a><a href="'|add:restore_all_data_url|add:'" class="btn btn-outline-danger"><i class="bi bi-upload"></i> Відновити всі дані</a></div>' %}
+
+  <!-- Управління користувачами - только для менеджеров -->
+  {% include "wms/tools/_tool_card.html" with icon="bi-people text-primary" title="Управління користувачами" desc="Додавання, редагування та видалення користувачів системи." btn_html='<a href="/admin/accounts/customer/" class="btn btn-outline-primary" target="_blank"><i class="bi bi-person-lines-fill"></i> Перейти до управління</a>' %}
+
+  <!-- Відправка Email - только для менеджеров -->
+  {% url 'wms:send_email' as send_email_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-envelope text-info" title="Відправка Email" desc="Відправка повідомлень менеджерам, працівникам або вказаним email адресам." btn_html='<a href="'|add:send_email_url|add:'" class="btn btn-outline-info"><i class="bi bi-send"></i> Відправити Email</a>' %}
+
+  <!-- Створити інвентаризацію -->
+  {% url 'wms:inventory_create' as inventory_create_url %}
+  {% include "wms/tools/_tool_card.html" with icon="bi-clipboard-plus text-warning" title="Створити інвентаризацію" desc="Створення нової інвентаризації для контролю залишків на складі." btn_html='<a href="'|add:inventory_create_url|add:'" class="btn btn-outline-warning d-inline-flex align-items-center gap-2"><i class="bi bi-clipboard-plus"></i> Створити інвентаризацію</a>' %}
+  {% endif %}
+</div>
+
+<!-- Модальне вікно для генератора штрихкодів -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barcodeModalLabel">
+          <i class="bi bi-upc-scan"></i> Генератор штрихкодів
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="barcodeForm">
+          <div class="mb-3">
+            <label for="barcodeText" class="form-label">Текст для штрихкоду:</label>
+            <input type="text" class="form-control" id="barcodeText" name="text" value="{{ default_barcode }}" placeholder="Введіть текст або номер" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-upc-scan"></i> Згенерувати штрихкод
+            </button>
+          </div>
+        </form>
+        
+        <div id="barcodeResult" class="mt-3 text-center" style="display: none;">
+          <h6>Згенерований штрихкод:</h6>
+          <div id="barcodeImage" class="mb-3"></div>
+          <button type="button" class="btn btn-success btn-sm" id="downloadBarcode">
+            <i class="bi bi-download"></i> Зберегти зображення
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('barcodeForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const text = document.getElementById('barcodeText').value;
+  if (!text) return;
+  
+  // Показуємо індикатор завантаження
+  const resultDiv = document.getElementById('barcodeResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Завантаження...</span></div>';
+  
+  // Відправляємо запит на сервер
+  fetch('{% url "wms:barcode_generator" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({text: text})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      resultDiv.innerHTML = `
+        <h6>Згенерований штрихкод:</h6>
+        <div class="mb-3">
+          <img src="${data.barcode_url}" alt="Штрихкод" class="img-fluid border">
+        </div>
+        <button type="button" class="btn btn-success btn-sm" onclick="downloadImage('${data.barcode_url}', 'barcode_${text}.png')">
+          <i class="bi bi-download"></i> Зберегти зображення
+        </button>
+      `;
+    } else {
+      resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${data.error}</div>`;
+    }
+  })
+  .catch(error => {
+    resultDiv.innerHTML = `<div class="alert alert-danger">Помилка: ${error}</div>`;
+  });
+});
+
+function downloadImage(url, filename) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+
+{% csrf_token %}
+{% endblock %} 

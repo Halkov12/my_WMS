@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% load static %}
+{% load space_thousands %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item active" aria-current="page">Дашборд</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h1 class="mb-4 text-primary fw-bold d-flex align-items-center gap-2"><i class="bi bi-graph-up-arrow"></i> Дашборд складу</h1>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        {% if request.user.photo %}
+          <img src="{{ request.user.photo.url }}" alt="Аватар" class="rounded-circle border" style="width:56px; height:56px; object-fit:cover;">
+        {% else %}
+          <div class="display-4 text-primary mb-2"><i class="bi bi-person-circle"></i></div>
+        {% endif %}
+        <h4 class="fw-bold mb-1">Вітаємо, {{ request.user.get_full_name|default:request.user.email }}!</h4>
+        <div class="text-muted">Бажаємо гарного дня та продуктивної роботи 😊</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="display-4 text-success mb-2">{{ total_quantity|floatformat:0 }}</div>
+        <h5 class="card-title mb-0">Загальна кількість одиниць</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="display-4 text-warning mb-2">{{ total_products_count }}</div>
+        <h5 class="card-title mb-0">Кількість найменувань</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-12 col-lg-12 mt-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="display-4 text-info mb-2 d-flex align-items-center justify-content-center">
+          <span>
+            {{ total_stock_value|floatformat:0|space_thousands }}
+            <span class="fs-3 ms-2">грн</span>
+          </span>
+          <span class="text-white fs-4 mx-3 align-baseline">або</span>
+          <span class="text-success">
+            {{ total_stock_value_usd|space_thousands }}
+            <span class="fs-3 ms-2">USD</span>
+          </span>
+        </div>
+        <h5 class="card-title mb-0">Сума товарів на складі</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 text-primary fw-semibold mb-3"><i class="bi bi-bar-chart-line"></i> Операції за 7 днів</h2>
+        <div class="my-3" style="height: 180px;">
+          <canvas id="operationsChart" style="width:100%;"></canvas>
+        </div>
+        <div class="mt-3 d-flex gap-3 justify-content-center align-items-center">
+          <span class="badge bg-success"><i class="bi bi-box-arrow-in-down"></i> Прийом</span>
+          <span class="badge bg-warning text-dark"><i class="bi bi-box-arrow-up"></i> Видача</span>
+          <span class="badge bg-danger"><i class="bi bi-x-octagon"></i> Списання</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 text-primary fw-semibold mb-3"><i class="bi bi-clock-history"></i> Останні операції</h2>
+        {% if recent_operations %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Тип</th>
+                <th>Товар</th>
+                <th>К-сть</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for op in recent_operations %}
+              <tr>
+                <td>{{ op.date|date:'d.m.Y H:i' }}</td>
+                <td>
+                  {% if op.type == 1 %}<span class="badge bg-success"><i class="bi bi-box-arrow-in-down"></i> Прийом</span>{% endif %}
+                  {% if op.type == 2 %}<span class="badge bg-warning text-dark"><i class="bi bi-box-arrow-up"></i> Видача</span>{% endif %}
+                  {% if op.type == 3 %}<span class="badge bg-danger"><i class="bi bi-x-octagon"></i> Списання</span>{% endif %}
+                </td>
+                <td>{{ op.product }}</td>
+                <td>{{ op.quantity }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Немає недавніх операцій</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Новые графики -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 text-success fw-semibold mb-3"><i class="bi bi-pie-chart"></i> Остатки по категориям</h2>
+        <div class="my-3" style="height: 250px;">
+          <canvas id="categoryChart" style="width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 text-info fw-semibold mb-3"><i class="bi bi-trophy"></i> ТОП-5 товарів за кількістю</h2>
+        <div class="my-3" style="height: 250px;">
+          <canvas id="topProductsChart" style="width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 text-danger fw-semibold mb-3"><i class="bi bi-exclamation-triangle"></i> Низький залишок</h2>
+        {% if low_stock_products %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Товар</th>
+                <th>Кількість</th>
+                <th>Одиниця</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in low_stock_products %}
+              <tr>
+                <td>{{ p.name }}</td>
+                <td class="text-danger fw-bold">{{ p.quantity }}</td>
+                <td>{{ p.get_unit_display }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Всі залишки в нормі</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> Сповіщення</h5>
+        <ul class="list-unstyled mb-0">
+          {% for n in notifications %}
+          <li class="mb-2">
+            {% if n.type == 1 %}<i class="bi bi-info-circle text-primary"></i>{% endif %}
+            {% if n.type == 2 %}<i class="bi bi-arrow-down-circle text-success"></i>{% endif %}
+            {% if n.type == 3 %}<i class="bi bi-arrow-up-circle text-warning"></i>{% endif %}
+            {% if n.type == 4 %}<i class="bi bi-x-octagon text-danger"></i>{% endif %}
+            {% if n.type == 5 %}<i class="bi bi-person-check text-info"></i>{% endif %}
+            {{ n.message }}
+            <span class="text-muted small ms-2">{{ n.created_at|date:'d.m.Y H:i' }}</span>
+          </li>
+          {% empty %}
+          <li class="text-muted">Немає важливих сповіщень</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-2">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 text-primary fw-semibold mb-3"><i class="bi bi-folder2-open"></i> Категорії</h2>
+        {% if categories_data %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Категорія</th>
+                <th>Активні товари</th>
+                <th>Загальна кількість</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for category in categories_data %}
+              <tr>
+                <td>{{ category.name }}</td>
+                <td>{{ category.active_products }}</td>
+                <td>{{ category.total_quantity|floatformat:"-2" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">Немає даних по категоріях</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // График операций (существующий)
+  const ctx = document.getElementById('operationsChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ date_labels|safe }},
+      datasets: [
+        {
+          label: 'Прийом',
+          data: {{ receipt_data|safe }},
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25, 135, 84, 0.1)',
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#198754'
+        },
+        {
+          label: 'Видача',
+          data: {{ issue_data|safe }},
+          borderColor: '#ffc107',
+          backgroundColor: 'rgba(255, 193, 7, 0.1)',
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#ffc107'
+        },
+        {
+          label: 'Списання',
+          data: {{ write_off_data|safe }},
+          borderColor: '#dc3545',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#dc3545'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { size: 12 }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            font: { size: 12 }
+          }
+        }
+      }
+    }
+  });
+
+  // График остатков по категориям (круговая диаграмма)
+  const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+  const categoryChart = new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ category_chart_labels|safe }},
+      datasets: [{
+        data: {{ category_chart_data|safe }},
+        backgroundColor: [
+          '#4e54c8', '#8f94fb', '#4facfe', '#00f2fe', '#43e97b',
+          '#38f9d7', '#fa709a', '#fee140', '#a8edea', '#fed6e3'
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 15,
+            usePointStyle: true,
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  });
+
+  // График ТОП-5 товаров (горизонтальная столбчатая диаграмма)
+  const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+  const topProductsChart = new Chart(topProductsCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ top_products_labels|safe }},
+      datasets: [{
+        label: 'Количество',
+        data: {{ top_products_data|safe }},
+        backgroundColor: [
+          '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'
+        ],
+        borderColor: [
+          '#ff5252', '#26a69a', '#29b6f6', '#66bb6a', '#ffd54f'
+        ],
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 11 }
+          }
+        },
+        y: {
+          ticks: {
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

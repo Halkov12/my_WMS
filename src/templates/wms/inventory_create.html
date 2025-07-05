@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}Створити інвентаризацію{% endblock %}
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:tools' %}">Інструменти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Створити інвентаризацію</li>
+  </ol>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard-plus"></i> Створити інвентаризацію</h4>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_note" class="form-label">Примітка</label>
+      {{ form.note|add_class:'form-control' }}
+    </div>
+    <div class="mb-3">
+      <input type="text" id="product-search" class="form-control" placeholder="Пошук по товарах...">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle text-center" id="products-table">
+        <thead class="table-light">
+          <tr>
+            <th>Товар</th>
+            <th>Штрихкод</th>
+            <th>Категорія</th>
+            <th>Облікований залишок</th>
+            <th>Фактичний залишок</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in formset.forms %}
+          {% with product=form.initial.product %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.barcode }}</td>
+            <td>{{ product.category.name|default:"-" }}</td>
+            <td>{{ product.quantity }}</td>
+            <td>{{ form.actual_quantity }}</td>
+            {{ form.product.as_hidden }}
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Зберегти інвентаризацію</button>
+  </form>
+</div>
+<script>
+  document.getElementById('product-search').addEventListener('input', function() {
+    const value = this.value.toLowerCase();
+    document.querySelectorAll('#products-table tbody tr').forEach(function(row) {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(value) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %} 

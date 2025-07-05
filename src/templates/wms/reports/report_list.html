@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Звіти{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіти</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard-data"></i> Звіти</h2>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-box-seam fs-1 text-primary mb-3"></i>
+        <h5 class="card-title">Звіт по товарах</h5>
+        <p class="card-text">Детальний звіт по всіх товарах на складі</p>
+        <a href="{% url 'wms:product_report' %}" class="btn btn-primary">Переглянути</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-arrow-left-right fs-1 text-success mb-3"></i>
+        <h5 class="card-title">Звіт по операціях</h5>
+        <p class="card-text">Звіт по руху товарів за період</p>
+        <a href="{% url 'wms:stock_report' %}" class="btn btn-success">Переглянути</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-clock-history fs-1 text-info mb-3"></i>
+        <h5 class="card-title">Звіт по змінах</h5>
+        <p class="card-text">Історія змін в системі</p>
+        <a href="{% url 'wms:changelog_report' %}" class="btn btn-info">Переглянути</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-clipboard-data fs-1 text-warning mb-3"></i>
+        <h5 class="card-title">Звіт по інвентаризації</h5>
+        <p class="card-text">Порівняння фактичних і облікових залишків, виявлення розбіжностей</p>
+        <a href="{% url 'wms:inventory_report' %}" class="btn btn-warning">Переглянути</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3"></i>
+        <h5 class="card-title">Звіт по товарам з мінімальним залишком</h5>
+        <p class="card-text">Список товарів, у яких залишок менше або дорівнює мінімальному</p>
+        <a href="{% url 'wms:min_stock_report' %}" class="btn btn-danger">Переглянути</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

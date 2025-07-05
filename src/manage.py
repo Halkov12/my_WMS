@@ -1,13 +1,18 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 import os
+import pathlib
 import subprocess
 import sys
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env(pathlib.Path(__file__).parent.parent / ".env")
+
 
 def main():
-    """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
+    if "DJANGO_SETTINGS_MODULE" not in os.environ:
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
 
     if sys.argv[1].lower() == "test":
         print("NOTE: Running black formatter")

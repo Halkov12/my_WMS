@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - FAQ{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">FAQ</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-question-circle"></i> Часто задавані питання
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="accordion" id="faqAccordion">
+      <!-- Товари -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading1">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="false" aria-controls="collapse1">
+            <i class="bi bi-box-seam me-2"></i> Як створити новий товар?
+          </button>
+        </h2>
+        <div id="collapse1" class="accordion-collapse collapse" aria-labelledby="heading1" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для створення нового товару:</p>
+            <ol>
+              <li>Перейдіть до розділу "Прийом"</li>
+              <li>Натисніть кнопку "Створити новий товар"</li>
+              <li>Заповніть обов'язкові поля (назва, кількість, ціни)</li>
+              <li>Додайте штрихкод та фото, якщо потрібно</li>
+              <li>Натисніть "Створити товар"</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading2">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+            <i class="bi bi-pencil me-2"></i> Як відредагувати товар?
+          </button>
+        </h2>
+        <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для редагування товару:</p>
+            <ol>
+              <li>Знайдіть товар у списку на сторінці "Товари"</li>
+              <li>Натисніть на назву товару або кнопку "Редагувати"</li>
+              <li>Внесіть необхідні зміни</li>
+              <li>Збережіть зміни кнопкою "Оновити товар"</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Операції -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading3">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+            <i class="bi bi-arrow-left-right me-2"></i> Як виконати прийом товарів?
+          </button>
+        </h2>
+        <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для прийому товарів:</p>
+            <ol>
+              <li>Перейдіть до розділу "Прийом"</li>
+              <li>Додайте існуючі товари або створіть нові</li>
+              <li>Вкажіть кількість для кожного товару</li>
+              <li>Заповніть причину прийому</li>
+              <li>Додайте примітку, якщо потрібно</li>
+              <li>Підтвердіть операцію</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading4">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+            <i class="bi bi-box-arrow-up me-2"></i> Як видати товари зі складу?
+          </button>
+        </h2>
+        <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="heading4" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для видачі товарів:</p>
+            <ol>
+              <li>Перейдіть до розділу "Видача"</li>
+              <li>Виберіть товари зі списку</li>
+              <li>Вкажіть кількість для видачі</li>
+              <li>Заповніть причину видачі</li>
+              <li>Додайте примітку, якщо потрібно</li>
+              <li>Підтвердіть операцію</li>
+            </ol>
+            <div class="alert alert-warning mt-3">
+              <i class="bi bi-exclamation-triangle"></i> Перевірте наявність товарів перед видачею!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Імпорт/Експорт -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading5">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
+            <i class="bi bi-upload me-2"></i> Як імпортувати товари з файлу?
+          </button>
+        </h2>
+        <div id="collapse5" class="accordion-collapse collapse" aria-labelledby="heading5" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для імпорту товарів:</p>
+            <ol>
+              <li>Перейдіть до розділу "Інструменти"</li>
+              <li>Натисніть "Імпорт товарів"</li>
+              <li>Виберіть файл CSV або Excel</li>
+              <li>Перегляньте попередній перегляд</li>
+              <li>Підтвердіть імпорт</li>
+            </ol>
+            <p><strong>Обов'язкові колонки:</strong> name, quantity, purchase_price, sale_price</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading6">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6" aria-expanded="false" aria-controls="collapse6">
+            <i class="bi bi-download me-2"></i> Як експортувати товари?
+          </button>
+        </h2>
+        <div id="collapse6" class="accordion-collapse collapse" aria-labelledby="heading6" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для експорту товарів:</p>
+            <ol>
+              <li>Перейдіть до розділу "Інструменти"</li>
+              <li>Виберіть формат експорту (CSV або Excel)</li>
+              <li>Натисніть відповідну кнопку експорту</li>
+              <li>Файл автоматично завантажиться</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Резервне копіювання -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading7">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse7" aria-expanded="false" aria-controls="collapse7">
+            <i class="bi bi-cloud-upload me-2"></i> Як створити резервну копію?
+          </button>
+        </h2>
+        <div id="collapse7" class="accordion-collapse collapse" aria-labelledby="heading7" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для створення резервної копії:</p>
+            <ol>
+              <li>Перейдіть до розділу "Інструменти"</li>
+              <li>Виберіть тип резервної копії:
+                <ul>
+                  <li>"Резервна копія товарів" — тільки товари</li>
+                  <li>"Повна резервна копія" — всі дані</li>
+                </ul>
+              </li>
+              <li>Натисніть відповідну кнопку</li>
+              <li>Файл автоматично завантажиться</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Звіти -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading8">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse8" aria-expanded="false" aria-controls="collapse8">
+            <i class="bi bi-clipboard-data me-2"></i> Як згенерувати звіт?
+          </button>
+        </h2>
+        <div id="collapse8" class="accordion-collapse collapse" aria-labelledby="heading8" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для генерації звіту:</p>
+            <ol>
+              <li>Перейдіть до розділу "Звіти"</li>
+              <li>Виберіть тип звіту:
+                <ul>
+                  <li>Звіт по товарах</li>
+                  <li>Звіт по операціях</li>
+                  <li>Звіт по змінах</li>
+                </ul>
+              </li>
+              <li>Встановіть фільтри (дата, тип операції тощо)</li>
+              <li>Натисніть "Згенерувати звіт"</li>
+              <li>Виберіть формат експорту (PDF або Excel)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Технічні питання -->
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading9">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse9" aria-expanded="false" aria-controls="collapse9">
+            <i class="bi bi-gear me-2"></i> Що робити, якщо виникла помилка?
+          </button>
+        </h2>
+        <div id="collapse9" class="accordion-collapse collapse" aria-labelledby="heading9" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>При виникненні помилки:</p>
+            <ol>
+              <li>Перевірте правильність введених даних</li>
+              <li>Переконайтеся, що всі обов'язкові поля заповнені</li>
+              <li>Спробуйте оновити сторінку (F5)</li>
+              <li>Якщо помилка повторюється, зверніться до адміністратора</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item border-0 shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading10">
+          <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse10" aria-expanded="false" aria-controls="collapse10">
+            <i class="bi bi-shield-check me-2"></i> Як захистити свої дані?
+          </button>
+        </h2>
+        <div id="collapse10" class="accordion-collapse collapse" aria-labelledby="heading10" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            <p>Для захисту даних:</p>
+            <ul>
+              <li>Регулярно створюйте резервні копії</li>
+              <li>Зберігайте резервні копії в безпечному місці</li>
+              <li>Не передавайте доступ іншим особам</li>
+              <li>Використовуйте надійний пароль</li>
+              <li>Регулярно змінюйте пароль</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Швидкі посилання</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2"><a href="{% url 'wms:help_products' %}" class="text-decoration-none">📦 Управління товарами</a></li>
+          <li class="mb-2"><a href="{% url 'wms:help_operations' %}" class="text-decoration-none">🔄 Складські операції</a></li>
+          <li class="mb-2"><a href="{% url 'wms:help_reports' %}" class="text-decoration-none">📊 Звіти та аналітика</a></li>
+          <li class="mb-2"><a href="{% url 'wms:help_tools' %}" class="text-decoration-none">🛠️ Інструменти</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-telephone"></i> Підтримка</h5>
+        <p>Якщо у вас є додаткові питання:</p>
+        <ul class="list-unstyled">
+          <li class="mb-2">📧 Напишіть на email</li>
+          <li class="mb-2">📞 Зателефонуйте</li>
+          <li class="mb-2">💬 Зверніться до адміністратора</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-info-circle"></i> Корисна інформація</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Всі операції логуються</li>
+          <li class="mb-2">✅ Дані захищені</li>
+          <li class="mb-2">✅ Регулярні оновлення</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

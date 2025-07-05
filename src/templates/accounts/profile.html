@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Профіль користувача{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Профіль</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Основная информация профиля -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+          {% if user.photo %}
+            <img src="{{ user.photo.url }}" alt="Фото профілю" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+          {% else %}
+            <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+              <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+            </div>
+          {% endif %}
+          
+          <h4 class="mb-1">{{ user.get_full_name }}</h4>
+          <p class="text-muted mb-2">{{ user.get_role_display_uk }}</p>
+          
+          {% if user.position %}
+            <p class="text-muted mb-1"><i class="bi bi-briefcase"></i> {{ user.position }}</p>
+          {% endif %}
+          
+          {% if user.department %}
+            <p class="text-muted mb-3"><i class="bi bi-building"></i> {{ user.department }}</p>
+          {% endif %}
+          
+          <div class="d-flex justify-content-center gap-2 mb-3">
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-sm">
+              <i class="bi bi-pencil"></i> Редагувати
+            </a>
+            <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-key"></i> Змінити пароль
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Контактная информация -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-person-lines-fill"></i> Контактна інформація</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <strong>Email:</strong><br>
+            <a href="mailto:{{ user.email }}">{{ user.email }}</a>
+          </div>
+          
+          {% if user.phone_number %}
+            <div class="mb-2">
+              <strong>Телефон:</strong><br>
+              <a href="tel:{{ user.phone_number }}">{{ user.phone_number }}</a>
+            </div>
+          {% endif %}
+          
+          {% if user.birth_date %}
+            <div class="mb-2">
+              <strong>Дата народження:</strong><br>
+              {{ user.birth_date|date:"d.m.Y" }}
+              {% if user.age %}
+                ({{ user.age }} років)
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="col-lg-8">
+      <!-- Статистика активности -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-graph-up"></i> Статистика активності</h6>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-primary mb-1">{{ total_operations|default:0 }}</h4>
+                <small class="text-muted">Всього операцій</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-success mb-1">{{ operations_this_week }}</h4>
+                <small class="text-muted">За тиждень</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-info mb-1">{{ operations_this_month }}</h4>
+                <small class="text-muted">За місяць</small>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="border rounded p-3">
+                <h4 class="text-warning mb-1">{{ user.profile_views }}</h4>
+                <small class="text-muted">Переглядів профілю</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Информация об аккаунте -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-info-circle"></i> Інформація про акаунт</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Дата реєстрації:</strong><br>
+                {{ user.date_joined|date:"d.m.Y H:i" }}</p>
+              <p><strong>На сайті:</strong><br>
+                {{ registration_duration.days }} днів</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Останній вхід:</strong><br>
+                {% if user.get_last_login_display %}
+                  {{ user.get_last_login_display|date:"d.m.Y H:i" }}
+                {% else %}
+                  Ніколи не входив
+                {% endif %}</p>
+              <p><strong>Всього входів:</strong><br>
+                {{ user.get_total_logins_display }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

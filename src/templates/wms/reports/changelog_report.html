@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Звіт по змінах{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по змінах</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clock-history"></i> Звіт по змінах</h4>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center table-sticky">
+          <thead class="table-light">
+            <tr>
+              <th>Дата</th>
+              <th>Користувач</th>
+              <th>Опис</th>
+              <th>Деталі</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in changelogs %}
+            <tr>
+              <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+              <td>{{ log.user.get_full_name|default:"-" }}</td>
+              <td class="text-start">{{ log.action }}</td>
+              <td class="text-start small">
+                {% if log.details %}
+                  <ul class="mb-0 ps-3 text-start">
+                  {% for k, v in log.details.items %}
+                    <li><strong>{{ k|capfirst }}:</strong>
+                      {% if v.old is not None and v.new is not None %}
+                        <span class="text-muted">було</span> {{ v.old }} <span class="text-primary">→</span> <span class="text-muted">стало</span> {{ v.new }}
+                      {% else %}
+                        {{ v }}
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                  </ul>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4">Немає змін за останні 30 днів.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

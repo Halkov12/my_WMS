@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Відправка Email{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-envelope"></i> Відправка Email
+    </h2>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          <!-- Тип отримувачів -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Отримувачі:</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="recipient_type" id="recipient_managers" value="managers" checked>
+              <label class="form-check-label" for="recipient_managers">
+                Всі менеджери ({{ managers_count }} осіб)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="recipient_type" id="recipient_employees" value="employees">
+              <label class="form-check-label" for="recipient_employees">
+                Всі працівники ({{ employees_count }} осіб)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="recipient_type" id="recipient_custom" value="custom">
+              <label class="form-check-label" for="recipient_custom">
+                Власний email
+              </label>
+            </div>
+          </div>
+
+          <!-- Поле для власного email -->
+          <div class="mb-3" id="custom_email_field" style="display: none;">
+            <label for="custom_email" class="form-label">Email адреси:</label>
+            <input type="text" class="form-control" id="custom_email" name="custom_email" 
+                   placeholder="example@email.com, another@email.com">
+            <div class="form-text">Введіть email адреси через кому для відправки кільком отримувачам</div>
+          </div>
+
+          <!-- Тема -->
+          <div class="mb-3">
+            <label for="subject" class="form-label fw-bold">Тема:</label>
+            <input type="text" class="form-control" id="subject" name="subject" required>
+          </div>
+
+          <!-- Повідомлення -->
+          <div class="mb-3">
+            <label for="message" class="form-label fw-bold">Повідомлення:</label>
+            <textarea class="form-control" id="message" name="message" rows="8" required></textarea>
+          </div>
+
+          <!-- Кнопки -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-send"></i> Відправити Email
+            </button>
+            <a href="{% url 'wms:tools' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Назад
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const customEmailField = document.getElementById('custom_email_field');
+  const customEmailRadio = document.getElementById('recipient_custom');
+  
+  // Показуємо/ховаємо поле для власного email
+  document.querySelectorAll('input[name="recipient_type"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      if (this.value === 'custom') {
+        customEmailField.style.display = 'block';
+        document.getElementById('custom_email').required = true;
+      } else {
+        customEmailField.style.display = 'none';
+        document.getElementById('custom_email').required = false;
+      }
+    });
+  });
+});
+</script>
+{% endblock %} 

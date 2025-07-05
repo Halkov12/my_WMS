@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WMS — Складська система{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100 theme-light" id="body-theme" data-bs-theme="light">
+{% include "inc/header.html" %}
+<main class="main-content flex-fill">
+    <div class="container py-4">
+        {% include "inc/messages.html" %}
+        <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080; min-width:320px;">
+            <div id="toast-container"></div>
+        </div>
+        {% block breadcrumbs %}{% endblock %}
+        {% block content %}{% endblock %}
+    </div>
+</main>
+{% include "inc/footer.html" %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script>
+// Тема: перемикач, localStorage, auto
+(function(){
+  const body = document.getElementById('body-theme');
+  function setTheme(theme) {
+    body.classList.remove('theme-light','theme-dark');
+    body.classList.add('theme-'+theme);
+    body.setAttribute('data-bs-theme', theme);
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+  }
+  function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  const saved = localStorage.getItem('theme');
+  setTheme(saved || getSystemTheme());
+  window.setTheme = setTheme;
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

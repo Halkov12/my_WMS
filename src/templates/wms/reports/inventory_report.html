@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Звіт по інвентаризації{% endblock %}
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+    <li class="breadcrumb-item"><a href="/">Головна</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'wms:report_list' %}">Звіти</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Звіт по інвентаризації</li>
+  </ol>
+</nav>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <h4 class="mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard-data"></i> Звіт по інвентаризації</h4>
+  {% for inv in inventories %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <b>Дата:</b> {{ inv.date|date:"Y-m-d H:i" }} &nbsp; <b>Користувач:</b> {{ inv.user.get_full_name|default:"-" }} &nbsp; <b>Примітка:</b> {{ inv.note|default:"-" }}
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Товар</th>
+                <th>Штрихкод</th>
+                <th>Категорія</th>
+                <th>Облікований залишок</th>
+                <th>Фактичний залишок</th>
+                <th>Різниця</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in inv.items.all %}
+              <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.barcode }}</td>
+                <td>{{ item.product.category.name|default:"-" }}</td>
+                <td>{{ item.product.quantity }}</td>
+                <td>{{ item.actual_quantity }}</td>
+                <td>{% widthratio item.actual_quantity|floatformat:2 1 1 %} - {% widthratio item.product.quantity|floatformat:2 1 1 %} = {{ item.actual_quantity|floatformat:2|add:"-"|add:item.product.quantity|floatformat:2 }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6">Немає даних</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="alert alert-info">Немає інвентаризацій.</div>
+  {% endfor %}
+</div>
+{% endblock %} 

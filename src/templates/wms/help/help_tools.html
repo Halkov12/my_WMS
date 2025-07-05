@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Довідка - Інструменти{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb bg-white rounded-3 shadow-sm px-3 py-2">
+        <li class="breadcrumb-item"><a href="{% url 'wms:help_main' %}">Довідка</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Інструменти</li>
+      </ol>
+    </nav>
+    
+    <h2 class="mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-tools"></i> Інструменти та утиліти
+    </h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    {% include "wms/tools/_tool_card.html" with icon="bi-upc-scan text-primary" title="Генератор штрихкодів" desc="Створення штрихкодів у форматі Code 128 для маркування товарів." btn_html='<span class="text-muted">Доступно всім користувачам. Використовуйте на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-question-circle text-info" title="Довідка" desc="Детальна документація по використанню системи та вирішенню проблем." btn_html='<span class="text-muted">Доступно всім користувачам. Перейдіть до <a href="{% url 'wms:help_main' %}">довідки</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-download text-success" title="Експорт товарів" desc="Вивантаження даних про товари в файли CSV або Excel для збереження або передачі." btn_html='<span class="text-muted">Доступно менеджерам. Експортуйте товари на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-upload text-warning" title="Імпорт товарів" desc="Масове додавання товарів з файлів CSV або Excel з попереднім переглядом." btn_html='<span class="text-muted">Доступно менеджерам. Імпортуйте товари на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-cloud-upload text-secondary" title="Резервна копія товарів" desc="Створення резервної копії тільки товарів для захисту від втрати даних." btn_html='<span class="text-muted">Доступно менеджерам. Створіть або відновіть копію на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-cloud-arrow-up text-danger" title="Повна резервна копія" desc="Створення повної резервної копії всіх даних системи включаючи користувачів та операції." btn_html='<span class="text-muted">Доступно менеджерам. Створіть або відновіть повну копію на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-people text-primary" title="Управління користувачами" desc="Додавання, редагування та видалення користувачів системи." btn_html='<span class="text-muted">Доступно менеджерам. Управління користувачами через <a href="/admin/accounts/customer/" target="_blank">адмін-панель</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-envelope text-info" title="Відправка Email" desc="Відправка повідомлень менеджерам, працівникам або вказаним email адресам." btn_html='<span class="text-muted">Доступно менеджерам. Відправляйте email на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+    {% include "wms/tools/_tool_card.html" with icon="bi-clipboard-plus text-warning" title="Створити інвентаризацію" desc="Створення нової інвентаризації для контролю залишків на складі." btn_html='<span class="text-muted">Доступно менеджерам. Створіть інвентаризацію на сторінці <a href="/tools/">Інструменти</a>.</span>' %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-lightbulb"></i> Поради</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">✅ Регулярно створюйте резервні копії</li>
+          <li class="mb-2">✅ Перевіряйте формат файлів перед імпортом</li>
+          <li class="mb-2">✅ Зберігайте резервні копії в безпечному місці</li>
+          <li class="mb-2">✅ Використовуйте унікальні штрихкоди</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h5><i class="bi bi-shield-check"></i> Безпека</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">🔒 Доступ тільки для адміністраторів</li>
+          <li class="mb-2">🔒 Всі операції логуються</li>
+          <li class="mb-2">🔒 Перевірка форматів файлів</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5><i class="bi bi-exclamation-triangle"></i> Важливо</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">⚠️ Відновлення перезапише дані</li>
+          <li class="mb-2">⚠️ Перевіряйте файли перед імпортом</li>
+          <li class="mb-2">⚠️ Зберігайте резервні копії</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
