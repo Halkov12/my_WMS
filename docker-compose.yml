@@ -4,7 +4,7 @@ services:
     container_name: wms_container
     working_dir: /wms/src
     ports:
-      - "8000:8010"
+      - "8010"
     command: /wms/commands/start_server_prod.sh
     volumes:
       - ./src:/wms/src
