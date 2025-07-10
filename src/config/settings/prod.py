@@ -1,10 +1,12 @@
+import os
+
 from config.settings.base import *  # NOQA:F403
 
 SECRET_KEY = env("SECRET_KEY", default="some-very-secret-key")  # NOQA:F405
 
 DEBUG = env.bool("DEBUG", default=False)  # NOQA:F405
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])  # NOQA:F405
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")  # NOQA:F405
 
 ROOT_URLCONF = "config.urls"
 
