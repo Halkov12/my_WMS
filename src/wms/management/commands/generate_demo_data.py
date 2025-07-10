@@ -106,7 +106,7 @@ class Command(BaseCommand):
                 purchase_price = random.randint(500, selling_price)
                 quantity = random.randint(1, 200)
                 if cat.name == "Смартфони":
-                    description = f"Смартфон {name} з дисплеєм {random.choice(['6.1"', '6.5"', '6.7"'])}, {random.choice(['128 ГБ', '256 ГБ', '512 ГБ'])}, {random.choice(['чорний', 'білий', 'синій', 'фіолетовий', 'сріблястий'])}. Ідеально підходить для роботи та розваг."
+                    description = f"Смартфон {name} з дисплеєм {random.choice(['6.1\'', '6.5\'', '6.7\''])}, {random.choice(['128 ГБ', '256 ГБ', '512 ГБ'])}, {random.choice(['чорний', 'білий', 'синій', 'фіолетовий', 'сріблястий'])}. Ідеально підходить для роботи та розваг."
                 elif cat.name == "Ноутбуки":
                     description = f"Ноутбук {name} з процесором {random.choice(['Intel Core i7', 'Intel Core i5', 'AMD Ryzen 7', 'Apple M2'])}, {random.choice(['16 ГБ', '32 ГБ'])} ОЗП, SSD {random.choice(['512 ГБ', '1 ТБ'])}. Легкий та потужний для щоденних задач."
                 elif cat.name == "Аудіотехніка":
