@@ -5,7 +5,11 @@
         <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2 me-3" href="/">
             <span class="packpilot-orbitron">PackPilot</span>
         </a>
-        <div class="collapse navbar-collapse show flex-grow-1" id="mainNavbar">
+        <!-- Бургер-кнопка -->
+        <button class="navbar-toggler ms-auto d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Переключить навигацию">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse flex-grow-1" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-row gap-2 align-items-center">
                 {% if user.is_authenticated %}
                 <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:dashboard' %}"><i class="bi bi-speedometer2"></i> Дашборд</a></li>
