@@ -497,16 +497,24 @@ nav.navbar {
 }
 .theme-dark .navbar-nav.flex-row .nav-link {
     background: #23272b !important;
-    color: #f1f1f1 !important;
-    box-shadow: 0 2px 8px rgba(80,80,160,0.10);
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(80,80,160,0.13);
     border: none;
+}
+.theme-dark .navbar-nav.flex-row .nav-link i {
+    color: #fff !important;
+    opacity: 1 !important;
+    filter: none !important;
 }
 .theme-dark .navbar-nav.flex-row .nav-link:hover,
 .theme-dark .navbar-nav.flex-row .nav-link.active {
-    background: #2d3748 !important;
+    background: #31343a !important;
     color: #8f94fb !important;
-    box-shadow: 0 4px 16px rgba(80,80,160,0.18);
-    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(80,80,160,0.22);
+}
+.theme-dark .navbar-nav.flex-row .nav-link:hover i,
+.theme-dark .navbar-nav.flex-row .nav-link.active i {
+    color: #8f94fb !important;
 }
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
