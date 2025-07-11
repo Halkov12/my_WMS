@@ -979,7 +979,6 @@ nav.navbar {
     border-radius: 1.1rem;
     border: none;
 }
-2750b9a (Зміни у style.css)
 
 /* Исправление бага с цветами в тёмной теме для всех nav-link в navbar */
 .theme-dark .navbar-nav .nav-link,
