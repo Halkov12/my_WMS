@@ -1,6 +1,9 @@
 from django import forms
 from django.forms import inlineformset_factory
+
 from wms.models import Product, StockOperation, StockOperationItem
+
+
 class StockOperationForm(forms.ModelForm):
     class Meta:
         model = StockOperation
@@ -9,10 +12,13 @@ class StockOperationForm(forms.ModelForm):
             "reason": forms.TextInput(attrs={"class": "form-control"}),
             "note": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["reason"].label = "Причина"
         self.fields["note"].label = "Примітка"
+
+
 class StockOperationItemForm(forms.ModelForm):
     class Meta:
         model = StockOperationItem
@@ -21,6 +27,8 @@ class StockOperationItemForm(forms.ModelForm):
             "product": forms.Select(attrs={"class": "form-control select2-product"}),
             "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
         }
+
+
 StockOperationItemFormSet = inlineformset_factory(
     StockOperation,
     StockOperationItem,
@@ -28,6 +36,8 @@ StockOperationItemFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
 )
+
+
 class ProductCreateForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -50,6 +60,7 @@ class ProductCreateForm(forms.ModelForm):
             "photo": forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/*"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields.pop("purchase_price_currency", None)
@@ -67,9 +78,12 @@ class ProductCreateForm(forms.ModelForm):
         self.fields["category"].label = "Категорія"
         self.fields["description"].label = "Опис"
         self.fields["photo"].label = "Фото товару"
+
     def clean(self):
         cleaned_data = super().clean()
         return cleaned_data
+
+
 class AddProductForm(forms.Form):
     product = forms.ModelChoiceField(
         queryset=Product.objects.all(),
@@ -89,6 +103,8 @@ class AddProductForm(forms.Form):
         max_digits=10,
         widget=forms.NumberInput(attrs={"class": "form-control"}),
     )
+
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -107,6 +123,7 @@ class ProductForm(forms.ModelForm):
             "photo": forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/*"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields.pop("purchase_price_currency", None)
@@ -115,6 +132,7 @@ class ProductForm(forms.ModelForm):
             self.fields["purchase_price"].widget.widgets[1].input_type = "hidden"
         if "selling_price" in self.fields:
             self.fields["selling_price"].widget.widgets[1].input_type = "hidden"
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         if self.data.get("photo-clear"):
