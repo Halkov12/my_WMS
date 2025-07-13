@@ -64,7 +64,6 @@ class CustomerRegistrationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-
         user.show_email = True
         user.show_phone = False
         user.show_birth_date = False
@@ -92,7 +91,6 @@ class ProfileUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         for field in self.fields.values():
             if isinstance(field.widget, forms.TextInput) or isinstance(field.widget, forms.EmailInput):
                 field.widget.attrs.update({"class": "form-control"})

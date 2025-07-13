@@ -3,7 +3,6 @@ from django.contrib.auth.models import UserManager
 
 
 class CustomerManager(UserManager):
-
     def _create_user_object(self, email, password, **extra_fields):
         if not email:
             raise ValueError("The given email must be set")
@@ -13,13 +12,11 @@ class CustomerManager(UserManager):
         return user
 
     def _create_user(self, email, password, **extra_fields):
-
         user = self._create_user_object(email, password, **extra_fields)
         user.save(using=self._db)
         return user
 
     async def _acreate_user(self, email, password, **extra_fields):
-
         user = self._create_user_object(email, password, **extra_fields)
         await user.asave(using=self._db)
         return user
@@ -41,21 +38,17 @@ class CustomerManager(UserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
-
         return self._create_user(email, password, **extra_fields)
 
     async def acreate_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
-
         return await self._acreate_user(email, password, **extra_fields)

@@ -28,7 +28,6 @@ def get_products_with_category():
 def check_barcode_exists(barcode):
     cache_key = f"barcode_exists_{barcode}"
     result = cache.get(cache_key)
-
     if result is None:
         result = Product.objects.filter(barcode=barcode).exists()
         cache.set(cache_key, result, 300)
@@ -38,13 +37,11 @@ def check_barcode_exists(barcode):
 def get_products_stats():
     cache_key = "products_stats"
     stats = cache.get(cache_key)
-
     if stats is None:
         stats = Product.objects.filter(is_active=True).aggregate(
             count=Count("id"), total_quantity=Sum("quantity"), total_value=Sum(F("purchase_price") * F("quantity"))
         )
         cache.set(cache_key, stats, 600)
-
     return stats
 
 

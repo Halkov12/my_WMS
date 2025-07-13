@@ -81,7 +81,6 @@ class ProductCreateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
         return cleaned_data
 
 
@@ -93,7 +92,7 @@ class AddProductForm(forms.Form):
             attrs={
                 "class": "form-select",
                 "hx-get": "/products/search/",
-                "hx-target": "#product-results",
+                "hx-target": "",
             }
         ),
     )

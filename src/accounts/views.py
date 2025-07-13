@@ -80,7 +80,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         user_operations = StockOperation.objects.filter(created_by=user)
         role_display = user.get_role_display()
         registration_duration = user.get_registration_duration()
-
         context.update(
             {
                 "user": user,
@@ -130,18 +129,15 @@ class UserListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         users = Customer.objects.filter(is_active=True).order_by("-date_joined")
         users = users.annotate(
             operations_count=models.Count("stockoperation", filter=models.Q(stockoperation__isnull=False))
         )
-
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)
         active_users = users.filter(
             models.Q(last_login_date__date__gte=week_ago) | models.Q(last_login__date__gte=week_ago)
         ).count()
-
         context.update(
             {
                 "users": users,
@@ -158,16 +154,12 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs.get("user_id")
-
         try:
             user = Customer.objects.get(id=user_id, is_active=True)
             user_operations = StockOperation.objects.filter(created_by=user)
-
             role_display = user.get_role_display()
-
             age = user.get_age()
             registration_duration = user.get_registration_duration()
-
             context.update(
                 {
                     "profile_user": user,
@@ -181,5 +173,4 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         except Customer.DoesNotExist:
             messages.error(self.request, "Користувача не знайдено.")
             return redirect("accounts:user_list")
-
         return context
