@@ -85,7 +85,7 @@ AUTH_USER_MODEL = "accounts.Customer"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 STATICFILES_DIRS = [
-    BASE_DIR / "src" / "static",
+    BASE_DIR / "static",
 ]
 STATIC_ROOT = BASE_DIR / "src" / "staticfiles"
 STATIC_URL = "/static/"
