@@ -1,7 +1,6 @@
 import os
 from io import BytesIO
 from pathlib import Path
-
 from django.core.cache import cache
 from django.db.models import Count, F, Q, Sum
 from django.http import HttpResponse
@@ -12,19 +11,12 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
                                 TableStyle)
-
 from .models import (Category, Notification, Product, StockOperation,
                      StockOperationItem)
-
-
 def get_active_products_queryset():
     return Product.objects.filter(is_active=True)
-
-
 def get_products_with_category():
     return get_active_products_queryset().select_related("category")
-
-
 def check_barcode_exists(barcode):
     cache_key = f"barcode_exists_{barcode}"
     result = cache.get(cache_key)
@@ -32,8 +24,6 @@ def check_barcode_exists(barcode):
         result = Product.objects.filter(barcode=barcode).exists()
         cache.set(cache_key, result, 300)
     return result
-
-
 def get_products_stats():
     cache_key = "products_stats"
     stats = cache.get(cache_key)
@@ -43,23 +33,15 @@ def get_products_stats():
         )
         cache.set(cache_key, stats, 600)
     return stats
-
-
 def get_categories_with_stats():
     return Category.objects.annotate(
         active_products=Count("product", filter=Q(product__is_active=True)),
         total_quantity=Sum("product__quantity"),
     ).filter(active_products__gt=0, total_quantity__gt=0)
-
-
 def get_low_stock_products(threshold=10, limit=10):
     return get_active_products_queryset().filter(quantity__lt=threshold).order_by("quantity")[:limit]
-
-
 def get_recent_operations(limit=10):
     return StockOperationItem.objects.select_related("operation", "product").order_by("-operation__created_at")[:limit]
-
-
 def export_table_to_pdf(data, title, col_widths, filename):
     font_path = str(Path(__file__).resolve().parent.parent / "static" / "fonts" / "DejaVuSans.ttf")
     if not os.path.exists(font_path):
@@ -96,14 +78,10 @@ def export_table_to_pdf(data, title, col_widths, filename):
     response["Content-Disposition"] = f"attachment; filename={filename}"
     response.write(pdf)
     return response
-
-
 def process_stock_operation(cart, user, operation_type, reason="", note="", notification_type=None, increase=True):
     from decimal import Decimal
-
     from django.db import transaction
     from django.shortcuts import get_object_or_404
-
     with transaction.atomic():
         operation = StockOperation.objects.create(
             operation_type=operation_type,

@@ -3,16 +3,11 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
-
 from accounts.managers import CustomerManager
-
-
 class ROLE_CHOICES(models.IntegerChoices):
     WORKER = 0, "Worker"
     MANAGER = 1, "Manager"
     SELLER = 2, "Seller"
-
-
 class Customer(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField("Ім'я", max_length=150, blank=True)
     last_name = models.CharField("Прізвище", max_length=150, blank=True)
@@ -59,21 +54,16 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
     objects = CustomerManager()
-
     def __str__(self):
         return self.email
-
     def get_full_name(self):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.email
-
     def get_short_name(self):
         return self.first_name
-
     def get_registration_duration(self):
         return timezone.now() - self.date_joined
-
     def get_age(self):
         if self.birth_date:
             today = timezone.now().date()
@@ -83,7 +73,6 @@ class Customer(AbstractBaseUser, PermissionsMixin):
                 - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
             )
         return None
-
     def get_role_display_uk(self):
         role_names = {
             ROLE_CHOICES.WORKER: "Працівник",
@@ -91,38 +80,31 @@ class Customer(AbstractBaseUser, PermissionsMixin):
             ROLE_CHOICES.SELLER: "Продавець",
         }
         return role_names.get(self.role, "Невідомо")
-
     def increment_profile_views(self):
         self.profile_views += 1
         self.save(update_fields=["profile_views"])
-
     def update_last_login(self):
         self.last_login_date = timezone.now()
         self.total_logins += 1
         self.save(update_fields=["last_login_date", "total_logins"])
-
     def get_last_login_display(self):
         if self.last_login_date:
             return self.last_login_date
         elif self.last_login:
             return self.last_login
         return None
-
     def get_total_logins_display(self):
         if self.total_logins > 0:
             return self.total_logins
         elif self.last_login_date or self.last_login:
             return 1
         return 0
-
     class Meta:
         verbose_name = "Користувач"
         verbose_name_plural = "Користувачі"
-
     def clean(self):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
-
     def save(self, *args, **kwargs):
         if not self.pk:
             self.total_logins = 0

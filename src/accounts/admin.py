@@ -1,8 +1,5 @@
 from django.contrib import admin
-
 from accounts.models import Customer
-
-
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ["email", "first_name", "last_name", "role", "is_active", "date_joined"]
