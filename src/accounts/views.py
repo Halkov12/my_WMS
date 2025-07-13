@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,20 +10,15 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView, TemplateView, UpdateView
-
 from accounts.forms import (CustomerRegistrationForm, EmailLoginForm,
                             PasswordChangeForm, ProfileUpdateForm)
 from accounts.models import Customer
 from wms.models import Notification, StockOperation
-
-
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"
     authentication_form = EmailLoginForm
-
     def get_success_url(self):
         return reverse_lazy("wms:index")
-
     def form_valid(self, form):
         try:
             response = super().form_valid(form)
@@ -39,17 +33,12 @@ class CustomLoginView(LoginView):
             logger = logging.getLogger(__name__)
             logger.error(f"Login error: {e}")
             raise
-
-
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy("accounts:login")
-
-
 class RegisterView(FormView):
     template_name = "accounts/register.html"
     form_class = CustomerRegistrationForm
     success_url = reverse_lazy("wms:index")
-
     def form_valid(self, form):
         user = form.save()
         email = form.cleaned_data.get("email")
@@ -66,11 +55,8 @@ class RegisterView(FormView):
         messages.success(self.request, "Registration was successful.")
         Notification.objects.create(type=5, message=f"Новий користувач: <strong>{email}</strong>", user=user)
         return super().form_valid(form)
-
-
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/profile.html"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
@@ -80,7 +66,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         user_operations = StockOperation.objects.filter(created_by=user)
         role_display = user.get_role_display()
         registration_duration = user.get_registration_duration()
-
         context.update(
             {
                 "user": user,
@@ -94,28 +79,20 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             }
         )
         return context
-
-
 class ProfileEditView(LoginRequiredMixin, UpdateView):
     template_name = "accounts/profile_edit.html"
     form_class = ProfileUpdateForm
     success_url = reverse_lazy("accounts:profile")
-
     def get_object(self):
         return self.request.user
-
     def form_valid(self, form):
         messages.success(self.request, "Профіль успішно оновлено!")
         return super().form_valid(form)
-
-
 class PasswordChangeView(LoginRequiredMixin, View):
     template_name = "accounts/password_change.html"
-
     def get(self, request):
         form = PasswordChangeForm(request.user)
         return render(request, self.template_name, {"form": form})
-
     def post(self, request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -123,25 +100,19 @@ class PasswordChangeView(LoginRequiredMixin, View):
             messages.success(request, "Пароль успішно змінено!")
             return redirect("accounts:profile")
         return render(request, self.template_name, {"form": form})
-
-
 class UserListView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/user_list.html"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         users = Customer.objects.filter(is_active=True).order_by("-date_joined")
         users = users.annotate(
             operations_count=models.Count("stockoperation", filter=models.Q(stockoperation__isnull=False))
         )
-
         total_users = users.count()
         week_ago = timezone.now().date() - timedelta(days=7)
         active_users = users.filter(
             models.Q(last_login_date__date__gte=week_ago) | models.Q(last_login__date__gte=week_ago)
         ).count()
-
         context.update(
             {
                 "users": users,
@@ -150,24 +121,17 @@ class UserListView(LoginRequiredMixin, TemplateView):
             }
         )
         return context
-
-
 class UserDetailView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/user_detail.html"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_id = self.kwargs.get("user_id")
-
         try:
             user = Customer.objects.get(id=user_id, is_active=True)
             user_operations = StockOperation.objects.filter(created_by=user)
-
             role_display = user.get_role_display()
-
             age = user.get_age()
             registration_duration = user.get_registration_duration()
-
             context.update(
                 {
                     "profile_user": user,
@@ -181,5 +145,4 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         except Customer.DoesNotExist:
             messages.error(self.request, "Користувача не знайдено.")
             return redirect("accounts:user_list")
-
         return context

@@ -1,12 +1,9 @@
 import random
-
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from faker import Faker
 from django.db import connection
-
 from wms.models import OPERATION_CHOICES, Category, Product, StockOperation
-
 PRODUCT_NAMES = [
     "iPhone 14 Pro",
     "Samsung Galaxy S23",
@@ -59,39 +56,29 @@ PRODUCT_NAMES = [
     "Intel Core i9-13900K",
     "AMD Ryzen 9 7950X",
 ]
-
 CATEGORY_NAMES = ["Смартфони", "Ноутбуки", "Аудіотехніка", "Побутова техніка", "Гаджети"]
-
-
 class Command(BaseCommand):
     help = (
         "Генерує 5 категорій, по 20 продуктів з реальними назвами і штрихкодами, і до кожного продукту по 2-3 операції."
     )
-
     def handle(self, *args, **options):
         from wms.models import ChangeLog, StockOperationItem
-
         if connection.vendor == 'sqlite':
             with connection.cursor() as cursor:
                 cursor.execute('PRAGMA foreign_keys = OFF;')
-
         ChangeLog.objects.all().delete()
         StockOperationItem.objects.all().delete()
         StockOperation.objects.all().delete()
         Product.objects.all().delete()
         Category.objects.all().delete()
-
         if connection.vendor == 'sqlite':
             with connection.cursor() as cursor:
                 cursor.execute('PRAGMA foreign_keys = ON;')
-
         fake = Faker("uk_UA")
-
         categories = []
         for name in CATEGORY_NAMES:
             cat = Category.objects.create(name=name)
             categories.append(cat)
-
         products = []
         used_barcodes = set()
         for cat in categories:
@@ -128,10 +115,8 @@ class Command(BaseCommand):
                     description=description,
                 )
                 products.append(prod)
-
         User = get_user_model()
         user = User.objects.first()
-
         operations = []
         op_types = [OPERATION_CHOICES.RECEIPT, OPERATION_CHOICES.ISSUE, OPERATION_CHOICES.WRITE_OFF]
         for prod in products:
@@ -145,7 +130,6 @@ class Command(BaseCommand):
                 )
                 StockOperationItem.objects.create(operation=operation, product=prod, quantity=random.randint(1, 50))
                 operations.append(operation)
-
         self.stdout.write(
             self.style.SUCCESS(
                 f"Створено {len(categories)} категорій, {len(products)} продуктів, {len(operations)} операцій."

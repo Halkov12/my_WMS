@@ -1,5 +1,4 @@
 from django.urls import path
-
 from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        DashboardView, HelpFaqView, HelpOperationsView,
                        HelpProductsView, HelpReportsView, HelpToolsView,
@@ -14,9 +13,7 @@ from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        preview_import_products, preview_import_products_ajax,
                        restore_all_data, restore_products,
                        send_email_to_managers)
-
 app_name = "wms"
-
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),

@@ -1,15 +1,8 @@
 import os
-
-from config.settings.base import *  # NOQA:F403
-
-SECRET_KEY = env("SECRET_KEY", default="insecure-key-for-dev-only")  # NOQA:F405
-
+from config.settings.base import *
+SECRET_KEY = env("SECRET_KEY", default="insecure-key-for-dev-only")
 DEBUG = True
-
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])  # NOQA:F405
-
-# MIDDLEWARE + = ['']
-
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 if os.environ.get("GITHUB_WORKFLOW"):
     DATABASES = {
         "default": {
@@ -25,8 +18,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",  # NOQA:F405
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
 STATIC_URL = "/static/"
