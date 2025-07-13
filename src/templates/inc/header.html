@@ -1,7 +1,7 @@
 {% load static %}
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm w-100 position-sticky top-0 z-3">
-    <div class="d-flex align-items-center w-100">
+<nav class="navbar navbar-expand-lg navbar-light bg-white position-sticky top-0 z-3">
+    <div class="container-fluid align-items-center">
         <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2 me-3" href="/">
             <span class="packpilot-orbitron">PackPilot</span>
         </a>
@@ -10,26 +10,30 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse flex-grow-1" id="mainNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-row gap-2 align-items-center">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
                 {% if user.is_authenticated %}
                 <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:dashboard' %}"><i class="bi bi-speedometer2"></i> Дашборд</a></li>
                 {% endif %}
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:product_list' %}"><i class="bi bi-box-seam"></i> Товари</a></li>
-                {% if user.is_authenticated and user.role == 1 %}
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:receipt_list' %}"><i class="bi bi-box-arrow-in-down"></i> Прийом</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:issue_list' %}"><i class="bi bi-box-arrow-up"></i> Видача</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:writeoff_list' %}"><i class="bi bi-x-octagon"></i> Списання</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:report_list' %}"><i class="bi bi-bar-chart"></i> Звіти</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:tools' %}"><i class="bi bi-tools"></i> Інструменти</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:user_list' %}"><i class="bi bi-people"></i> Користувачі</a></li>
-                {% elif user.is_authenticated and user.role == 2 %}
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:receipt_list' %}"><i class="bi bi-box-arrow-in-down"></i> Прийом</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:issue_list' %}"><i class="bi bi-box-arrow-up"></i> Видача</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:writeoff_list' %}"><i class="bi bi-x-octagon"></i> Списання</a></li>
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:tools' %}"><i class="bi bi-tools"></i> Інструменти</a></li>
-                {% elif user.is_authenticated and user.role == 0 %}
-                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1 shadow-sm" href="{% url 'wms:tools' %}"><i class="bi bi-tools"></i> Інструменти</a></li>
+                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:product_list' %}"><i class="bi bi-box-seam"></i> Товари</a></li>
+                {% if user.is_authenticated and user.role == 1 or user.is_authenticated and user.role == 2 %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle d-inline-flex align-items-center gap-1" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-arrow-left-right"></i> Операції
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="operationsDropdown">
+                    <li><a class="dropdown-item" href="{% url 'wms:receipt_list' %}"><i class="bi bi-box-arrow-in-down"></i> Прийом</a></li>
+                    <li><a class="dropdown-item" href="{% url 'wms:issue_list' %}"><i class="bi bi-box-arrow-up"></i> Видача</a></li>
+                    <li><a class="dropdown-item" href="{% url 'wms:writeoff_list' %}"><i class="bi bi-x-octagon"></i> Списання</a></li>
+                  </ul>
+                </li>
+                {% else %}
+                  {% if user.is_authenticated and user.role == 0 %}
+                    <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:tools' %}"><i class="bi bi-tools"></i> Інструменти</a></li>
+                  {% endif %}
                 {% endif %}
+                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:report_list' %}"><i class="bi bi-bar-chart"></i> Звіти</a></li>
+                <li class="nav-item"><a class="nav-link d-inline-flex align-items-center gap-1" href="{% url 'wms:tools' %}"><i class="bi bi-tools"></i> Інструменти</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:user_list' %}"><i class="bi bi-people"></i> Користувачі</a></li>
             </ul>
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item d-flex align-items-center">
