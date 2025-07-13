@@ -9,6 +9,14 @@ class ProductSerializer(serializers.ModelSerializer):
     purchase_price = MoneyField(max_digits=10, decimal_places=2, default_currency="UAH")
     selling_price = MoneyField(max_digits=10, decimal_places=2, default_currency="UAH")
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if "unit" in data:
+            from django.utils.translation import gettext as _
+
+            data["unit"] = _(instance.get_unit_display())
+        return data
+
     class Meta:
         model = Product
         fields = "__all__"
@@ -19,6 +27,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     unit = serializers.CharField(source="get_unit_display")
     photo = serializers.ImageField(use_url=True)
     description = serializers.CharField()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if "unit" in data:
+            from django.utils.translation import gettext as _
+
+            data["unit"] = _(instance.get_unit_display())
+        return data
 
     class Meta:
         model = Product

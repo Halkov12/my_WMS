@@ -9,7 +9,6 @@ class CustomerAdmin(admin.ModelAdmin):
     list_filter = ["role", "is_active", "is_staff", "date_joined"]
     search_fields = ["email", "first_name", "last_name"]
     ordering = ["-date_joined"]
-
     fieldsets = (
         (
             "Основна інформація",
@@ -19,7 +18,6 @@ class CustomerAdmin(admin.ModelAdmin):
         ("Права доступу", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Важливі дати", {"fields": ("date_joined", "last_login_date", "total_logins", "profile_views")}),
     )
-
     readonly_fields = [
         "date_joined",
         "last_login_date",

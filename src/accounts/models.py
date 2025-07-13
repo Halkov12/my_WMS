@@ -41,7 +41,6 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateTimeField("Дата народження", blank=True, null=True)
     photo = models.ImageField("Фото", upload_to="img/profiles", null=True, blank=True)
     role = models.PositiveIntegerField("Роль", choices=ROLE_CHOICES, default=ROLE_CHOICES.SELLER)
-
     position = models.CharField("Посада", max_length=100, blank=True)
     department = models.CharField("Департамент", max_length=100, blank=True)
     address = models.TextField("Адреса", blank=True)
@@ -57,10 +56,8 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     last_login_date = models.DateTimeField("Останній вхід", null=True, blank=True)
     total_logins = models.PositiveIntegerField("Всього входів", default=0)
     profile_views = models.PositiveIntegerField("Переглядів профілю", default=0)
-
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
-
     objects = CustomerManager()
 
     def __str__(self):

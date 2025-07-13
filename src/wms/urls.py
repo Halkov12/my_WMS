@@ -16,7 +16,6 @@ from wms.views import (BarcodeGeneratorView, ChangeLogReportView,
                        send_email_to_managers)
 
 app_name = "wms"
-
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),

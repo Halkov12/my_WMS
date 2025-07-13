@@ -1,23 +1,24 @@
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 
 class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    created_at = models.DateTimeField("Дата створення", auto_now_add=True, null=True)
-    updated_at = models.DateTimeField("Дата оновлення", auto_now=True, null=True)
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(_("Updated at"), auto_now=True, null=True)
 
 
 class Setting(models.Model):
-    key = models.CharField("Ключ", max_length=100, unique=True)
-    value = models.CharField("Значення", max_length=255)
+    key = models.CharField(_("Key"), max_length=100, unique=True)
+    value = models.CharField(_("Value"), max_length=255)
 
     class Meta:
-        verbose_name = "Налаштування"
-        verbose_name_plural = "Налаштування"
+        verbose_name = _("Setting")
+        verbose_name_plural = _("Settings")
 
     def __str__(self):
         return self.key
@@ -28,7 +29,7 @@ def log_setting_save(sender, instance, created, **kwargs):
     from wms.models import ChangeLog
 
     user = getattr(instance, "_log_user", None)
-    action = "Створено налаштування" if created else "Змінено налаштування"
+    action = "Setting created" if created else "Setting modified"
     ChangeLog.objects.create(
         user=user,
         action=action,
@@ -46,7 +47,7 @@ def log_setting_delete(sender, instance, **kwargs):
     user = getattr(instance, "_log_user", None)
     ChangeLog.objects.create(
         user=user,
-        action="Видалено налаштування",
+        action="Setting deleted",
         details={
             "key": instance.key,
             "value": instance.value,

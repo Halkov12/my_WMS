@@ -5,13 +5,10 @@ from pathlib import Path
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
-
 log_dir = BASE_DIR / "LOGS"
 os.makedirs(log_dir, exist_ok=True)
-
 INSTALLED_APPS = [
     "jazzmin",
     "django.contrib.admin",
@@ -32,19 +29,7 @@ INSTALLED_APPS = [
     "common",
     "wms",
 ]
-
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
-
 ROOT_URLCONF = "config.urls"
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -59,9 +44,7 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = "config.wsgi.application"
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -76,32 +59,38 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-
-
 TIME_ZONE = "UTC"
-
-USE_I18N = False
-
+USE_I18N = True
+USE_L10N = True
 USE_TZ = True
-
+LANGUAGES = [
+    ("uk", "Українська"),
+    ("en", "English"),
+]
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 AUTH_USER_MODEL = "accounts.Customer"
-
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "src" / "static",
 ]
-
 STATIC_ROOT = BASE_DIR / "src" / "staticfiles"
 STATIC_URL = "/static/"
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -112,19 +101,16 @@ CACHES = {
         },
     }
 }
-
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
 }
-
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
-
 DJOSER = {
     "LOGIN_FIELD": "email",
     "USER_CREATE_PASSWORD_RETYPE": True,
@@ -132,24 +118,19 @@ DJOSER = {
     "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": True,
     "PASSWORD_RESET_CONFIRM_URL": "auth/password-reset/{uid}/{token}",
 }
-
 LANGUAGE_CODE = "uk"
-
 JAZZMIN_SETTINGS = {
     "site_title": "PackPilot Admin",
-    "site_header": "PackPilot",
     "site_brand": "PackPilot",
-    "site_logo": "/static/img/packpilot_logo.png",
-    "site_icon": "/static/img/favicon.png",
     "welcome_sign": "Ласкаво просимо до PackPilot Admin!",
     "copyright": "PackPilot",
-    "primary_color": "#4e54c8",
-    "secondary_color": "#8f94fb",
-    "accent": "#4e54c8",
-    "navbar": "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-    "navbar_text": "#fff",
-    "footer_background": "#f8fafc",
-    "footer_text": "#888",
+    "primary_color": "#007bff",
+    "secondary_color": "#6c757d",
+    "accent": "#17a2b8",
+    "navbar": "linear-gradient(90deg, #007bff 0%, #0056b3 100%)",
+    "navbar_text": "#ffffff",
+    "footer_background": "#f8f9fa",
+    "footer_text": "#6c757d",
     "actions_sticky_top": True,
     "related_modal_active": True,
     "show_sidebar": True,
@@ -174,7 +155,6 @@ JAZZMIN_SETTINGS = {
     "hide_apps": ["auth", "common"],
     "hide_models": ["auth.group", "auth.permission", "common.setting"],
 }
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -193,7 +173,7 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": BASE_DIR / "LOGS" / "wms.log",
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "maxBytes": 1024 * 1024 * 5,
             "backupCount": 5,
             "formatter": "verbose",
         },

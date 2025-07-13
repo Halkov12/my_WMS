@@ -1,0 +1,231 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-13 14:37+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: .\common\models.py:11
+msgid "Дата створення"
+msgstr ""
+
+#: .\common\models.py:12
+msgid "Дата оновлення"
+msgstr ""
+
+#: .\common\models.py:16
+msgid "Ключ"
+msgstr ""
+
+#: .\common\models.py:17
+msgid "Значення"
+msgstr ""
+
+#: .\common\models.py:20 .\common\models.py:21
+msgid "Налаштування"
+msgstr ""
+
+#: .\templates\admin\base_site.html:4
+msgid "Адміністрування"
+msgstr ""
+
+#: .\wms\models.py:11
+msgid "Назва категорії"
+msgstr ""
+
+#: .\wms\models.py:14 .\wms\models.py:56
+msgid "Категорія"
+msgstr ""
+
+#: .\wms\models.py:15
+msgid "Категорії"
+msgstr ""
+
+#: .\wms\models.py:22
+msgid "шт"
+msgstr ""
+
+#: .\wms\models.py:23
+msgid "кг"
+msgstr ""
+
+#: .\wms\models.py:24
+msgid "л"
+msgstr ""
+
+#: .\wms\models.py:25
+msgid "г"
+msgstr ""
+
+#: .\wms\models.py:29
+msgid "Назва товару"
+msgstr ""
+
+#: .\wms\models.py:30
+msgid "Штрихкод"
+msgstr ""
+
+#: .\wms\models.py:32
+msgid "Закупівельна ціна"
+msgstr ""
+
+#: .\wms\models.py:40
+msgid "Ціна продажу"
+msgstr ""
+
+#: .\wms\models.py:47
+msgid "Одиниця виміру"
+msgstr ""
+
+#: .\wms\models.py:48 .\wms\models.py:116
+msgid "Кількість"
+msgstr ""
+
+#: .\wms\models.py:49
+msgid "Мінімальний залишок"
+msgstr ""
+
+#: .\wms\models.py:50
+msgid "Активний"
+msgstr ""
+
+#: .\wms\models.py:58
+msgid "Фото"
+msgstr ""
+
+#: .\wms\models.py:59
+msgid "Опис"
+msgstr ""
+
+#: .\wms\models.py:62 .\wms\models.py:115 .\wms\models.py:143
+#: .\wms\models.py:197
+msgid "Товар"
+msgstr ""
+
+#: .\wms\models.py:63
+msgid "Товари"
+msgstr ""
+
+#: .\wms\models.py:76
+msgid "Максимальний розмір фото — 2 МБ."
+msgstr ""
+
+#: .\wms\models.py:78
+msgid "Можна завантажувати лише зображення."
+msgstr ""
+
+#: .\wms\models.py:82
+msgid "Прийом"
+msgstr ""
+
+#: .\wms\models.py:83
+msgid "Видача"
+msgstr ""
+
+#: .\wms\models.py:84 .\wms\models.py:160
+msgid "Списання"
+msgstr ""
+
+#: .\wms\models.py:89
+msgid "Тип операції"
+msgstr ""
+
+#: .\wms\models.py:95 .\wms\models.py:135 .\wms\models.py:182
+msgid "Користувач"
+msgstr ""
+
+#: .\wms\models.py:97
+msgid "Причина"
+msgstr ""
+
+#: .\wms\models.py:98 .\wms\models.py:183
+msgid "Примітка"
+msgstr ""
+
+#: .\wms\models.py:101 .\wms\models.py:113
+msgid "Операція"
+msgstr ""
+
+#: .\wms\models.py:102
+msgid "Операції"
+msgstr ""
+
+#: .\wms\models.py:119
+msgid "Позиція операції"
+msgstr ""
+
+#: .\wms\models.py:120
+msgid "Позиції операцій"
+msgstr ""
+
+#: .\wms\models.py:137
+msgid "Дія"
+msgstr ""
+
+#: .\wms\models.py:145
+msgid "Деталі"
+msgstr ""
+
+#: .\wms\models.py:148
+msgid "Журнал змін"
+msgstr ""
+
+#: .\wms\models.py:149
+msgid "Журнали змін"
+msgstr ""
+
+#: .\wms\models.py:157
+msgid "Новий товар"
+msgstr ""
+
+#: .\wms\models.py:158
+msgid "Прийом товару"
+msgstr ""
+
+#: .\wms\models.py:159
+msgid "Видача товару"
+msgstr ""
+
+#: .\wms\models.py:161
+msgid "Новий користувач"
+msgstr ""
+
+#: .\wms\models.py:162
+msgid "Інше"
+msgstr ""
+
+#: .\wms\models.py:181
+msgid "Дата інвентаризації"
+msgstr ""
+
+#: .\wms\models.py:186 .\wms\models.py:195
+msgid "Інвентаризація"
+msgstr ""
+
+#: .\wms\models.py:187
+msgid "Інвентаризації"
+msgstr ""
+
+#: .\wms\models.py:198
+msgid "Фактичний залишок"
+msgstr ""
+
+#: .\wms\models.py:201
+msgid "Позиція інвентаризації"
+msgstr ""
+
+#: .\wms\models.py:202
+msgid "Позиції інвентаризації"
+msgstr ""
